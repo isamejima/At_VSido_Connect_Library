@@ -4,7 +4,7 @@
 #ifndef AT_VSIDO_CONNECT_LIBRARY
 #define AT_VSIDO_CONNECT_LIBRARY
 #include <Arduino.h>
-#include <DynamixelShield.h>
+
 
 //  データ変換用共用体
 typedef union   {
