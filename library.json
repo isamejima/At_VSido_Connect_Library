@@ -1,0 +1,22 @@
+{
+    "name": "VSido Connect Library",
+    "version": "0.0.1",
+    "description": "Library for VSido Protocol",
+    "keywords": "VSido",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/isamejima/At_VSido_Connect_Library"
+    },
+    "authors": [
+        {
+            "name": "Ippei Samejima",
+            "email": "isamejima@asratec.co.jp",
+            "url": "https://github.com/isamejima/At_VSido_Connect_Library",
+            "maintainer": true
+        }
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/isamejima/At_VSido_Connect_Library",
+    "frameworks": "*",
+    "platforms": "*"
+}
