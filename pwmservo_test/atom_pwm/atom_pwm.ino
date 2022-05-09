@@ -2,7 +2,10 @@
 #include <M5Atom.h>
 #include "AtomMotion.h"
 
-#define VSD_SERIAL Serial 
+#define VSD_SERIAL Serial2
+
+#define RX_PIN      32
+#define TX_PIN      26
 
 //V-SIdo Connectライブラリ
 At_Vsido_Connect_Library atvsdcon=At_Vsido_Connect_Library();
@@ -21,8 +24,8 @@ void setup() {
   Atom.Init();     //sda  25     scl  21 
   
   //シリアル関係初期化
-  VSD_SERIAL.begin(115200);
-  
+  VSD_SERIAL.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+
   atvsdcon.servo_connected[1]=true;
 
 }
@@ -41,6 +44,8 @@ void loop() {
   for(int sid=0;sid<atvsdcon.MAXSERVO;sid++){
     //受信角度を読み込み
     int int_position = atvsdcon.servo_angles[sid];
+	
+
 	
     //受信角度をサーボに送信
     if(atvsdcon.servo_connected[sid]){
