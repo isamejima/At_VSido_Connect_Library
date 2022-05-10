@@ -71,7 +71,7 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch) {
     if (ch != 'o' //念のため、知っているオペランド以外は通さない
         && ch != 't' && ch != 'v' && ch != 'V' && ch != 's' && ch != 'S' &&
         ch != '1' && ch != '2' && ch != '3' && ch != '4' &&
-        ch != '!') { //知らないオペランドの場合は受信をリセット
+        ch != '!' && ch != 'd') { //知らないオペランドの場合は受信をリセット
       reset_read1byte();
 
       return false;
@@ -107,6 +107,67 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch) {
   return false;
 }
 
+bool At_Vsido_Connect_Library::unpack_d()
+{
+      //データ構造がおかしければfalse
+    //id1 dad1 dln1 id2 dad2 dln2 …etc
+
+   if ((pc_ln - 4) % 3 != 0) {
+      reset_read1byte();
+      return false;
+    }
+
+    int servo_num = (pc_ln - 4) / 3;
+    int read_offset=3;//header op lenの3つを読み飛ばす
+
+    unsigned char r_op = pc_op;
+    unsigned char r_data[128];
+    int r_cnt = 0;
+    
+
+    //各id毎の処理
+    for (int i = 0; i < servo_num; i++) {
+      //値の復元
+      int servo_id = pc_rstr[read_offset + i * 3+0];
+      int dad=pc_rstr[read_offset + i * 3 +1];
+      int dln=pc_rstr[read_offset + i * 3 +2];      
+
+      if(dad!=0&&dad!=5){
+        //現状、特定のdad以外はエラーとする        
+        reset_read1byte();
+        return false;
+      }
+
+      if(dad==0&&dln==3){
+      //返信データ　statusbyte＋角度
+      unsigned char lower, upper;
+      divAngle(servo_present_angles[servo_id], &lower, &upper);
+      r_data[r_cnt++] = servo_id;
+      r_data[r_cnt++] = servo_status[servo_id];
+      r_data[r_cnt++] = lower;
+      r_data[r_cnt++] = upper;
+      }
+      else if(dad==5&&dln==2){
+      //返信データ トルク
+      unsigned char lower, upper;
+      divAngle(servo_present_torques[servo_id], &lower, &upper);
+      r_data[r_cnt++] = servo_id;
+      r_data[r_cnt++] = lower;
+      r_data[r_cnt++] = upper;
+      }
+      else {
+        //現時点で、特定のdad,dlnの組み合わせ以外はエラーとする
+        reset_read1byte();
+        return false;
+      }
+    }
+
+    //返信処理
+    gen_vsidocmd(r_op, r_data, r_cnt);
+    return true;
+}
+
+
 bool At_Vsido_Connect_Library::unpack() {
 
   r_ln = 0;
@@ -116,7 +177,11 @@ bool At_Vsido_Connect_Library::unpack() {
     gen_vsidocmd('!', NULL, 0);
     return true;
   }
-
+  
+  if (pc_op == 'd') {
+    return unpack_d();
+  }
+  
   //オペランドが'o'なら目標角度登録
   if (pc_op == 'o') {
     //データ構造がおかしければfalse
@@ -127,6 +192,7 @@ bool At_Vsido_Connect_Library::unpack() {
     }
 
     int servo_num = (pc_ln - 4 - 1) / 3;
+    int read_offset=4;//header op len　cycの4つを読み飛ばす
 
     unsigned char r_op = pc_op;
     unsigned char r_data[128];
@@ -135,9 +201,9 @@ bool At_Vsido_Connect_Library::unpack() {
     //各id毎の処理
     for (int i = 0; i < servo_num; i++) {
       //値の復元
-      int servo_id = pc_rstr[4 + i * 3];
+      int servo_id = pc_rstr[read_offset + i * 3+0];
       int servo_angle =
-          uniAngle(pc_rstr[4 + i * 3 + 1], pc_rstr[4 + i * 3 + 2]);
+          uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
       //値更新
       servo_angles[servo_id] = servo_angle;
 
@@ -165,6 +231,7 @@ bool At_Vsido_Connect_Library::unpack() {
 
     int servo_num = (pc_ln - 4 - 1) / 3;
 
+    int read_offset=4;//header op len　cycの4つを読み飛ばす
     unsigned char r_op = pc_op;
     unsigned char r_data[128];
     int r_cnt = 0;
@@ -172,9 +239,9 @@ bool At_Vsido_Connect_Library::unpack() {
     //各id毎の処理
     for (int i = 0; i < servo_num; i++) {
       //値の復元
-      int servo_id = pc_rstr[4 + i * 3];
+      int servo_id = pc_rstr[read_offset + i * 3];
       int servo_torque =
-          uniAngle(pc_rstr[4 + i * 3 + 1], pc_rstr[4 + i * 3 + 2]);
+          uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
       servo_torques[servo_id] = servo_torque;
 
       //返信データ
