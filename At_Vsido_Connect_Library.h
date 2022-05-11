@@ -62,6 +62,7 @@ private:
   void gen_vsidocmd(unsigned char r_op,unsigned char *data,int data_len);
 
   void reset_read1byte();
+  void check_servo_id(int id);
   bool unpack_d();
 
 };

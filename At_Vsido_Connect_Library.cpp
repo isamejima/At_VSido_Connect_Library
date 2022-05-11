@@ -155,6 +155,16 @@ bool At_Vsido_Connect_Library::unpack_d()
       r_data[r_cnt++] = lower;
       r_data[r_cnt++] = upper;
       }
+      if (dad == 19 && dln == 2)
+      {
+        //返信データ　statusbyte＋角度
+        unsigned char lower, upper;
+        divAngle(servo_present_angles[servo_id], &lower, &upper);
+        r_data[r_cnt++] = servo_id;
+        r_data[r_cnt++] = lower;
+        r_data[r_cnt++] = upper;
+      }
+
       else {
         //現時点で、特定のdad,dlnの組み合わせ以外はエラーとする
         reset_read1byte();
@@ -321,4 +331,9 @@ bool At_Vsido_Connect_Library::getStatus_Error(int id) {
   if (servo_status[id] & MASK_ERROR)
     return true;
   return false;
+}
+
+bool At_Vsido_Connect_Library::check_servo_id(int id)
+{
+  
 }
