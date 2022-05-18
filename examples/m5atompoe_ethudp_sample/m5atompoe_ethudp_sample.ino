@@ -15,84 +15,87 @@
 #define CS 19
 
 EthernetUDP udp;
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-//MACはATOM LITE POEサンプルと同じものを仮設定
+// WiFiUDP udp;
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+// MACはATOM LITE POEサンプルと同じものを仮設定
 
 // V-SIdo Connectライブラリ
 At_Vsido_Connect_Library atvsdcon = At_Vsido_Connect_Library();
 
-void VSD_isrRx() {
+void VSD_isrRx()
+{
   //利用可能なパケット長を確認
   int packetSize = udp.parsePacket();
 
-  if (packetSize) {
+  if (packetSize)
+  {
 
     //送信元(remote)のIPアドレス・ポートを確認
     IPAddress r_ip = udp.remoteIP();
     int r_port = udp.remotePort();
-    /*
-    Serial.print("received from IP: ");
-    Serial.print(r_ip);
-    Serial.printf(" on Port: %d\n",r_port);
-    */
 
     //パケット読出し
     char packetBuffer[255];
     udp.read(packetBuffer, packetSize);
 
-    // 1バイトずつ処理
-    for (int i = 0; i < packetSize; i++) {
+    for (int i = 0; i < packetSize; i++)
+    {
       char ch = packetBuffer[i];
       if (atvsdcon.read1byte(ch) == false)
-        //vsidopacketのchecksumまで読み込んだ時だけtrueを返す        
-        continue;//trueでなければ以後の処理はしない
+        continue;
 
       //解析を行う
-      if (atvsdcon.unpack()==false)continue;
-    
-        //解析内容が正しく、受信成功した場合の処理を書く
-        Serial.println("VSido Packet Received.");
+      if (atvsdcon.unpack() == false)
+        continue;
 
-        //返信
-        udp.beginPacket(r_ip, r_port);
-        udp.write(atvsdcon.r_str, atvsdcon.r_ln);
-        udp.endPacket();
-      }
+      //解析内容が正しく、受信成功した場合の処理を書く
+      Serial.println("VSido Packet Received.");
+
+      //返信
+      udp.beginPacket(r_ip, r_port);
+      udp.write(atvsdcon.r_str, atvsdcon.r_ln);
+      udp.endPacket();
     }
   }
 }
 
+void updateServoMotor()
+{
+  // TODO　目標角度に応じてモーターを回す
 
-void update_servo() {
-  //更新処理
-
-  for (int id = 1; id < atvsdcon.MAXSERVO; id++) {
-    atvsdcon.servo_present_angles[id] = atvsdcon.servo_angles[id]; //現在角度を目標角度に
+  //現在ステータス更新
+  for (int id = 1; id < atvsdcon.MAXSERVO; id++)
+  {
+    atvsdcon.servo_present_angles[id] = atvsdcon.servo_angles[id];   //現在角度を目標角度に
     atvsdcon.servo_present_torques[id] = atvsdcon.servo_torques[id]; //現在トルクを目標トルクに
 
     //サーボON状態を更新
-    if (atvsdcon.servo_torques[id] == 0) {
-      atvsdcon.setStatus_ServoOn(id, 0); // torqueoff状態
-    } else {
-      atvsdcon.setStatus_ServoOn(id, 1); // torqueon状態
+    if (atvsdcon.servo_torques[id] == 0)
+    {
+      atvsdcon.servo_status_servoon[id] = false; // servoeoff状態
+    }
+    else
+    {
+      atvsdcon.servo_status_servoon[id] = true; // servoon状態
     }
 
     //エラー情報を更新
-    atvsdcon.setStatus_Error(id, 0); // errorなし状態
+    atvsdcon.servo_status_error[id] = false; // torqueoff状態
   }
 }
 
-
-void setup_ethudp(){
+void setup_ethudp()
+{
   SPI.begin(SCK, MISO, MOSI, -1);
   Ethernet.init(CS);
-  Ethernet.begin(mac,ip);
+  Ethernet.begin(mac, ip);
 
   udp.begin(localPort);
   Serial.printf("udp server start. Port: %d\n", localPort);
 }
 
-void setup() {
+void setup()
+{
   //シリアルとled利用で初期化
   //シリアルは115200bps
   M5.begin(true, false, true);
@@ -102,19 +105,19 @@ void setup() {
   delay(50);
 
   setup_ethudp();
-  //setup最後に緑色LEDに
+  // setup最後に緑色LEDに
   M5.dis.drawpix(0, 0x00ff00);
-
 }
 
-void loop() {
+void loop()
+{
 
   M5.update();
 
   //現在角度、ステータスバイト更新処理
-  update_servo();
+  updateServoMotor();
 
-  // vsidoパケット処理
+  // vsidoパケット受信処理
   VSD_isrRx();
 
   delay(10);
