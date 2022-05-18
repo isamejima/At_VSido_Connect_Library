@@ -28,7 +28,7 @@
 ---ATOM MotionとAtom PoEの接続について---
 
 ATOM PoE内基板よりG21,G25,GND,3.3Vを引き出し、ATOM Motironに配線。
-信号用のI2C線２本とGND、ATOM　Motion側の制御用STMマイコンの電源に3.3Vの配線を行い、動作を確認した。
+信号用のI2C線2本とGND、ATOM　Motion側の制御用STMマイコンの電源に3.3Vの配線を行い、動作を確認した。
 
 PWMサーボの駆動はATOM Motion側のバッテリより供給される電力にて行う。
 
