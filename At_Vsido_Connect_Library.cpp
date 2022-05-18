@@ -258,7 +258,7 @@ bool At_Vsido_Connect_Library::unpack_t()
     }
     //返信データ
     unsigned char lower, upper;
-    divAngle(servo_present_angles[servo_id], &upper, &lower);
+    divAngle(servo_present_torques[servo_id], &upper, &lower);
     r_data[r_cnt++] = servo_id;
     r_data[r_cnt++] = getStatusByte(servo_id);
     r_data[r_cnt++] = upper;
