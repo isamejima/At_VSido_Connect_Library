@@ -44,15 +44,20 @@ void VSD_isrRx() {
     for (int i = 0; i < packetSize; i++) {
       char ch = packetBuffer[i];
       if (atvsdcon.read1byte(ch) == false)
-        continue;
+        //vsidopacketのchecksumまで読み込んだ時だけtrueを返す        
+        continue;//trueでなければ以後の処理はしない
 
-      //受信成功した場合の処理を書く
-      Serial.println("VSido Packet Received.");
-      
-      //返信
-      udp.beginPacket(r_ip, r_port);
-      udp.write(atvsdcon.r_str, atvsdcon.r_ln);
-      udp.endPacket();
+      //解析を行う
+      if (atvsdcon.unpack()==false)continue;
+    
+        //解析内容が正しく、受信成功した場合の処理を書く
+        Serial.println("VSido Packet Received.");
+
+        //返信
+        udp.beginPacket(r_ip, r_port);
+        udp.write(atvsdcon.r_str, atvsdcon.r_ln);
+        udp.endPacket();
+      }
     }
   }
 }
@@ -64,14 +69,16 @@ void update_servo() {
   for (int id = 1; id < atvsdcon.MAXSERVO; id++) {
     atvsdcon.servo_present_angles[id] = atvsdcon.servo_angles[id]; //現在角度を目標角度に
     atvsdcon.servo_present_torques[id] = atvsdcon.servo_torques[id]; //現在トルクを目標トルクに
+
+    //サーボON状態を更新
     if (atvsdcon.servo_torques[id] == 0) {
       atvsdcon.setStatus_ServoOn(id, 0); // torqueoff状態
     } else {
       atvsdcon.setStatus_ServoOn(id, 1); // torqueon状態
     }
 
-    atvsdcon.setStatus_Error(id, 0);   // errorなし状態
-
+    //エラー情報を更新
+    atvsdcon.setStatus_Error(id, 0); // errorなし状態
   }
 }
 

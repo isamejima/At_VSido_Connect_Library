@@ -58,13 +58,16 @@ private:
 
   //コマンド生成
   void divAngle(short data,unsigned char*lower,unsigned char*upper);
-  unsigned char calcsum(unsigned char *packet,int packet_ln);
-  void gen_vsidocmd(unsigned char r_op,unsigned char *data,int data_len);
+  unsigned char calcSum(unsigned char *packet,int packet_ln);
+  void genVSidoCmd(unsigned char r_op, const unsigned char &data, int data_len);
 
-  void reset_read1byte();
-  void check_servo_id(int id);
-  bool unpack_d();
+  //返信処理
+  void resetRead1byte();
+  virtual bool unpack_o();
+  virtual bool unpack_t();
+  virtual bool unpack_d();
 
+  bool checkServoID(int id);
 };
 
 #endif
