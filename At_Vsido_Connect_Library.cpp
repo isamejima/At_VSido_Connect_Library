@@ -5,6 +5,8 @@
 #include "At_Vsido_Connect_Library.h"
 #include <Arduino.h>
 
+static const int VSIDO_EXCEPTION_VALUE = 0x1fff; // 13bitの最大値
+
 // statusbyte処理用のbit演算関係
 static const unsigned int BIT_FLAG_0 = (1 << 0); // 0000 0000 0000 0001
 static const unsigned int BIT_FLAG_1 = (1 << 1); // 0000 0000 0000 0010
@@ -25,8 +27,8 @@ static const unsigned int MASK_SERVOON = BIT_FLAG_1;
 At_Vsido_Connect_Library::At_Vsido_Connect_Library() {}
 
 //  角度情報の統合
-short At_Vsido_Connect_Library::uniAngle(unsigned char lower,
-                                         unsigned char upper)
+short At_Vsido_Connect_Library::uniAngle(unsigned char upper,
+                                         unsigned char lower)
 {
   UNIWORD uniWord; // データ変換用共用体
   uniWord.aucData[0] = upper;
@@ -36,8 +38,8 @@ short At_Vsido_Connect_Library::uniAngle(unsigned char lower,
   return uniWord.sData;
 }
 //  角度情報の分割
-void At_Vsido_Connect_Library::divAngle(short data, unsigned char *lower,
-                                        unsigned char *upper)
+void At_Vsido_Connect_Library::divAngle(short data, unsigned char *upper,
+                                        unsigned char *lower)
 {
   UNIWORD uniWord; // データ変換用共用体
   uniWord.sData = data;
@@ -46,7 +48,7 @@ void At_Vsido_Connect_Library::divAngle(short data, unsigned char *lower,
   *lower = (uniWord.aucData[1] << 1);
 }
 
-void At_Vsido_Connect_Library::reset_read1byte()
+void At_Vsido_Connect_Library::resetRead1byte()
 {
   pc_cnt = 0;
   pc_ln = 0;
@@ -62,7 +64,7 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch)
   //受信パケットが長すぎる場合
   if (pc_cnt > MAXPACKETLEN)
   {
-    reset_read1byte();
+    resetRead1byte();
     return false;
   }
   //最初の文字が0xFF（スタートフラグ）ではない場合
@@ -71,17 +73,15 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch)
 
   if (ch == 0xFF)
   { //スタートフラグ
-    reset_read1byte();
+    resetRead1byte();
     pc_rstr[pc_cnt] = ch;
   }
   else if (pc_cnt == 1)
-  {               //オペランド
-    if (ch != 'o' //念のため、知っているオペランド以外は通さない
-        && ch != 't' && ch != 'v' && ch != 'V' && ch != 's' && ch != 'S' &&
-        ch != '1' && ch != '2' && ch != '3' && ch != '4' &&
-        ch != '!' && ch != 'd')
+  { //オペランド
+
+    if (checkOP(ch) == false)
     { //知らないオペランドの場合は受信をリセット
-      reset_read1byte();
+      resetRead1byte();
 
       return false;
     }
@@ -93,7 +93,7 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch)
     if (pc_ln < 4 ||
         pc_ln >= MAXPACKETLEN)
     { //パケット長が長すぎる場合は受信をリセット
-      reset_read1byte();
+      resetRead1byte();
       return false;
     }
   }
@@ -108,7 +108,7 @@ bool At_Vsido_Connect_Library::read1byte(unsigned char ch)
     //チェックサムが合わない場合は受信をリセット
     if (sum != 0)
     {
-      reset_read1byte();
+      resetRead1byte();
       return false;
     }
     //受信がすべてうまくいった場合trueを返す
@@ -125,7 +125,7 @@ bool At_Vsido_Connect_Library::unpack_d()
 
   if ((pc_ln - 4) % 3 != 0)
   {
-    reset_read1byte();
+    resetRead1byte();
     return false;
   }
 
@@ -144,52 +144,41 @@ bool At_Vsido_Connect_Library::unpack_d()
     int dad = pc_rstr[read_offset + i * 3 + 1];
     int dln = pc_rstr[read_offset + i * 3 + 2];
 
-    if (dad != 0 && dad != 5)
+    if (dad != 19 && dad != 25)
     {
       //現状、特定のdad以外はエラーとする
-      reset_read1byte();
+      resetRead1byte();
       return false;
     }
 
-    if (dad == 0 && dln == 3)
-    {
-      //返信データ　statusbyte＋角度
-      unsigned char lower, upper;
-      divAngle(servo_present_angles[servo_id], &lower, &upper);
-      r_data[r_cnt++] = servo_id;
-      r_data[r_cnt++] = servo_status[servo_id];
-      r_data[r_cnt++] = lower;
-      r_data[r_cnt++] = upper;
-    }
-    else if (dad == 5 && dln == 2)
-    {
-      //返信データ トルク
-      unsigned char lower, upper;
-      divAngle(servo_present_torques[servo_id], &lower, &upper);
-      r_data[r_cnt++] = servo_id;
-      r_data[r_cnt++] = lower;
-      r_data[r_cnt++] = upper;
-    }
     if (dad == 19 && dln == 2)
     {
       //返信データ　statusbyte＋角度
       unsigned char lower, upper;
-      divAngle(servo_present_angles[servo_id], &lower, &upper);
+      divAngle(servo_present_angles[servo_id], &upper, &lower);
       r_data[r_cnt++] = servo_id;
-      r_data[r_cnt++] = lower;
       r_data[r_cnt++] = upper;
+      r_data[r_cnt++] = lower;
     }
-
+    else if (dad == 25 && dln == 2)
+    {
+      //返信データ トルク
+      unsigned char lower, upper;
+      divAngle(servo_present_angles[servo_id], &upper, &lower);
+      r_data[r_cnt++] = servo_id;
+      r_data[r_cnt++] = upper;
+      r_data[r_cnt++] = lower;
+    }
     else
     {
-      //現時点で、特定のdad,dlnの組み合わせ以外はエラーとする
-      reset_read1byte();
+      //現時点では、特定のdad,dlnの組み合わせ以外はエラーとする
+      resetRead1byte();
       return false;
     }
   }
 
   //返信処理
-  genVSidoCmd(r_op, r_datamr_cnt);
+  genVSidoCmd(r_op, r_data, r_cnt);
   return true;
 }
 
@@ -199,7 +188,7 @@ bool At_Vsido_Connect_Library::unpack_o()
   // cycle id1 angle1_l angle1_h id2 angle2_l angle2_h…etc
   if ((pc_ln - 4 - 1) % 3 != 0)
   {
-    reset_read1byte();
+    resetRead1byte();
     return false;
   }
 
@@ -217,16 +206,19 @@ bool At_Vsido_Connect_Library::unpack_o()
     int servo_id = pc_rstr[read_offset + i * 3 + 0];
     int servo_angle =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
-    //値更新
-    servo_angles[servo_id] = servo_angle;
+    //例外値でなければ更新
+    if (servo_angle != VSIDO_EXCEPTION_VALUE)
+    {
+      servo_angles[servo_id] = servo_angle;
+    }
 
     //返信データ
     unsigned char lower, upper;
-    divAngle(servo_present_angles[servo_id], &lower, &upper);
+    divAngle(servo_present_angles[servo_id], &upper, &lower);
     r_data[r_cnt++] = servo_id;
-    r_data[r_cnt++] = servo_status[servo_id];
-    r_data[r_cnt++] = lower;
+    r_data[r_cnt++] = getStatusByte(servo_id);
     r_data[r_cnt++] = upper;
+    r_data[r_cnt++] = lower;
   }
 
   //返信処理
@@ -234,13 +226,13 @@ bool At_Vsido_Connect_Library::unpack_o()
   return true;
 }
 
-bool At_Vsido_Connect_Library::unpack_o()
+bool At_Vsido_Connect_Library::unpack_t()
 {
   //データ構造がおかしければfalse
   // cycle id1 torque1_l torque1_h id2 torque2_l torque2_h…etc
   if ((pc_ln - 4 - 1) % 3 != 0)
   {
-    reset_read1byte();
+    resetRead1byte();
     return false;
   }
 
@@ -258,14 +250,19 @@ bool At_Vsido_Connect_Library::unpack_o()
     int servo_id = pc_rstr[read_offset + i * 3];
     int servo_torque =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
-    servo_torques[servo_id] = servo_torque;
 
+    //例外値でなければ更新
+    if (servo_torque != VSIDO_EXCEPTION_VALUE)
+    {
+      servo_torques[servo_id] = servo_torque;
+    }
     //返信データ
     unsigned char lower, upper;
-    divAngle(servo_present_torques[servo_id], &lower, &upper);
+    divAngle(servo_present_angles[servo_id], &upper, &lower);
     r_data[r_cnt++] = servo_id;
-    r_data[r_cnt++] = lower;
+    r_data[r_cnt++] = getStatusByte(servo_id);
     r_data[r_cnt++] = upper;
+    r_data[r_cnt++] = lower;
   }
 
   //返信処理
@@ -280,7 +277,7 @@ bool At_Vsido_Connect_Library::unpack()
   //オペランドが'!'の処理
   if (pc_op == '!')
   {
-    genVSidoCmd('!', nullptr, 0);
+    genVSidoCmd('!', NULL, 0);
 
     return true;
   }
@@ -317,8 +314,7 @@ unsigned char At_Vsido_Connect_Library::calcSum(unsigned char *packet,
   return sum;
 }
 
-void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op,
-                                           unsigned char *data, int data_ln)
+void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op, const unsigned char *data, int data_ln)
 {
   int cnt = 0;
 
@@ -336,53 +332,50 @@ void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op,
   r_ln = cnt;
 }
 
-void At_Vsido_Connect_Library::setStatus_ServoOn(int id, bool flag)
+unsigned char At_Vsido_Connect_Library::getStatusByte(int id)
 {
-  // SON(6 bit)：サーボオン・オフ​
-  // 0:サーボオフ​,1:サーボオン​
-  if (flag)
-  {
-    //フラグを立てる
-    servo_status[id] |= MASK_SERVOON;
-  }
-  else
-  {
-    //フラグを消す
-    servo_status[id] &= ~MASK_SERVOON;
-  }
-}
+  if (checkServoID(id) == false)
+    return 0x01; //エラー
 
-void At_Vsido_Connect_Library::setStatus_Error(int id, bool flag)
-{
-  // ERR(7bit)：軸エラー​ 0:正常1:異常
-  if (flag)
+  unsigned char status_byte = 0;
+  if (servo_status_error[id])
   {
-    //フラグを立てる
-    servo_status[id] |= MASK_ERROR;
+    status_byte |= MASK_ERROR;
   }
-  else
+  if (servo_status_servoon[id])
   {
-    //フラグを消す
-    servo_status[id] &= ~MASK_ERROR;
+    status_byte |= MASK_SERVOON;
   }
-}
-
-bool At_Vsido_Connect_Library::getStatus_ServoOn(int id)
-{
-  if (servo_status[id] & MASK_SERVOON)
-    return true;
-  return false;
-}
-
-bool At_Vsido_Connect_Library::getStatus_Error(int id)
-{
-  if (servo_status[id] & MASK_ERROR)
-    return true;
-  return false;
+  return status_byte;
 }
 
 bool At_Vsido_Connect_Library::checkServoID(int id)
 {
+  if (id < 1)
+    return false;
+
   if (id > MAXSERVO)
     return false;
+
+  return true;
+}
+
+bool At_Vsido_Connect_Library::checkOP(unsigned char ch)
+{
+
+  // asratec 予約文字
+  if (ch >= 'a' && ch <= 'z')
+    return true;
+
+  // asratec 予約文字
+  if (ch == 'M' || ch == '!')
+    return true;
+
+  //ユーザー利用許可　文字
+  if (ch >= '1' && ch <= '9')
+    return true;
+  if (ch >= 'A' && ch <= 'Z')
+    return true;
+
+  return false;
 }
