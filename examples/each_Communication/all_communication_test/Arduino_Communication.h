@@ -1,8 +1,6 @@
 #ifndef ARDUINO_COMMUNICATION
 #define ARDUINO_COMMUNICATION
 
-#include <WiFi.h>
-#include <WiFiUdp.h>
 
 #include "Network_Setting.h"
 

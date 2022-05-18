@@ -3,16 +3,28 @@
 #include "AtomMotion.h"
 
 #include "Arduino_Communication.h"
+
+#define VSD_SERIAL Serial2
+
+#define RX_PIN      32
+#define TX_PIN      26
  
-WiFiUDP udp;
+
 At_Vsido_Connect_Library atvsdcon=At_Vsido_Connect_Library();
 Arduino_Commnunication ardcon = Arduino_Commnunication();
 AtomMotion Atom;
 
-char packetBuffer[256]={0};
+void VSD_isrRx()
+{
+    while(VSD_SERIAL.available()) {    // 受信確認
+        unsigned char ch = VSD_SERIAL.read();            // 1文字だけ読み込む
+        if(atvsdcon.read1byte(ch)==false)continue;
+    }
+}
 
 void VSD_isrUDP()
 {
+	char packetBuffer[256]={0};
 	int packetSize = udp.parsePacket();
  
 	if (packetSize){
@@ -27,18 +39,20 @@ void VSD_isrUDP()
 }
 
 void setup() {
-  
+
   M5.begin(true, false, true);//引数はマイコンで変化　Atom liteの場合はUART,I2C,LEDの初期化の有無
   Atom.Init();     //sda  25     scl  21 
 
   delay(100);	//M5.beginのあとは他の処理の前に少し待機
-
-  Serial.begin(115200);
+  
+  M5.dis.drawpix(0, 0xffffff);
+	
+  //Serial.begin(115200);
 
   ardcon.init();
 
-  udp.begin(localPort);  // UDP通信の開始(引数はポート番号)
-
+    //シリアル関係初期化
+  VSD_SERIAL.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
   
   atvsdcon.servo_connected[1]=true;	//サーボ有効化
 
@@ -47,7 +61,7 @@ void setup() {
 
 void checkALL(){//受信割込み用の関数
   //シリアル割込み
-  //while ( VSD_SERIAL.available() )VSD_isrRx();
+  while ( VSD_SERIAL.available() )VSD_isrRx();
   //UDP割り込み処理を入れるならここ
   VSD_isrUDP();
 }
