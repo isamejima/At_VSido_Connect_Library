@@ -3,7 +3,28 @@
  */
 #ifndef AT_VSIDO_CONNECT_LIBRARY
 #define AT_VSIDO_CONNECT_LIBRARY
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+#ifdef ARDUINO
 #include <Arduino.h>
+#endif
+
+#ifndef VSIDO_MAXSREVO
+#define VSIDO_MAXSERVO 128
+#endif
+
+#ifndef VSIDO_MAXPACKETLEN
+#define VSIDO_MAXPACKETLEN 254
+#endif
+
+#ifndef VSIDO_MAXPACKETBUF
+#define VSIDO_MAXPACKETBUF (VSIDO_MAXPACKETLEN*2)
+#endif
+
 
 //  データ変換用共用体
 typedef union   {
@@ -16,63 +37,62 @@ class At_Vsido_Connect_Library
   public:
     At_Vsido_Connect_Library();
     // VSido関連
-    int MAXSERVO = 32;           //サーボの数
-    int servo_angles[128];       //受信した全関節角度指示値
-    int servo_torques[128];      //受信した全関節のトルク指示値
-    int servo_angles_ofset[128]; //関節角度補正値（今は外部から利用するだけで内部参照していない）
-    bool servo_connected[128];   //全関節接続状態（今は外部から利用するだけで内部参照していない）
+    const int MAXSERVO = VSIDO_MAXSERVO; //サーボの数
+    int servo_angles[VSIDO_MAXSERVO]; //受信した全関節角度指示値
+    int servo_torques[VSIDO_MAXSERVO]; //受信した全関節のトルク指示値
+    // vsido関連 現在値格納用
+    int servo_present_angles[VSIDO_MAXSERVO];  //全関節角度現在値
+    int servo_present_torques[VSIDO_MAXSERVO]; //全関節トルク現在値
+    //サーボステータス用のbit
+    bool servo_status_servoon[VSIDO_MAXSERVO]; //サーボオン状態
+    bool servo_status_error[VSIDO_MAXSERVO];   //エラー状態
 
+    //外部利用のみで内部参照しない値
+    int servo_angles_ofset[VSIDO_MAXSERVO]; //関節角度補正値（今は外部から利用するだけで内部参照していない）
+    bool servo_connected[VSIDO_MAXSERVO];   //全関節接続状態（今は外部から利用するだけで内部参照していない）
+    
     //通信用
-    int MAXPACKETLEN = 128;     //最大パケット長（これ以上長い場合は受信を中止）
-    unsigned char pc_rstr[256]; //受信データ
+    int MAXPACKETLEN = VSIDO_MAXPACKETLEN;     //最大パケット長（これ以上長い場合は受信を中止）
+    unsigned char pc_rstr[VSIDO_MAXPACKETBUF]; //受信データ
     int pc_cnt = 0;             //現在受信している文字数のカウント
     unsigned char pc_op = '_';  //受信中命令のオペランド（角度命令なら'o'等）
-    int pc_timeout = 0;         //タイムアウト（今は外部から利用するだけで内部参照していない）
     int pc_ln = 0;              //受信メッセージ中に表記された命令長。４～MAXPACKETLENの間になるはず
 
-    bool read1byte(unsigned char ch); //受信文字を追加。命令の受信に成功した時だけtrueを返す
+    bool read1byte(unsigned char ch); //受信文字を追加。1パケット分の命令の受信に成功した時だけtrueを返す
 
-    //受信処理用
-    virtual bool unpack(); //命令の受信に成功した後の処理。命令が適正だった時だけtrueを返す。
+    int pc_timeout = 0; //タイムアウト（今は外部から利用するだけで内部参照していない）
 
-    // vsido関連 返信処理用
-    int servo_present_angles[128];  //全関節角度現在値
-    int servo_present_torques[128]; //全関節トルク現在値
+    //解析用
+    bool unpack(); //旧nameの関数を残している
+    virtual bool unpackPacket(); //renameした解析関数の本体
 
-    //サーボステータス用のbit
-    bool servo_status_servoon[128]; //サーボオン状態
-    bool servo_status_error[128];   //エラー状態
-
-    // unpack内で返信パケットを生成
-    unsigned char r_str[128];////返信パケット
+    // unpackPacket内で返信パケットを生成
+    unsigned char r_str[VSIDO_MAXPACKETLEN];////返信パケット
     int r_ln = 0;       //返信パケットの長さ
 
-    // statusbyte用
-    bool getStatus_ServoOn(int id);
-    bool getStatus_Error(int id);
+    //isvalid関数
+    bool isValidServoID(int id);
+    bool isValidOP(unsigned char op);
 
-    void setStatus_ServoOn(int id, bool flag);
-    void setStatus_Error(int id, bool flag);
-
-  private:
+  protected:
     //  角度情報の統合
     short uniAngle(unsigned char upper, unsigned char lower);
-
-    //コマンド生成
     void divAngle(short data, unsigned char *upper, unsigned char *lower);
-    unsigned char calcSum(unsigned char *packet, int packet_ln);
+
+    short convertToProtocol(short raw_value);
+    short convertFromProtocol(short vsido_value);
+
+    //VSidoPacket処理
+    unsigned char calcSum(const unsigned char packet[], int packet_ln);
     unsigned char getStatusByte(int id);
-    bool checkServoID(int id);
-    bool checkOP(unsigned char op);
-
-    void genVSidoCmd(unsigned char r_op, const unsigned char *data, int data_ln);
-
-    //返信処理
+    void genVSidoCmd(unsigned char r_op, const unsigned char data[], int data_ln);
     void resetRead1byte();
-    virtual bool unpack_o();
-    virtual bool unpack_t();
-    virtual bool unpack_d();
+    bool isEXCEPTION_VALUE(int value);
 
+    //解析処理
+    virtual bool unpackObjectPacket();
+    virtual bool unpackTorquePacket();
+    virtual bool unpackDataPacket();
   };
 
 #endif
