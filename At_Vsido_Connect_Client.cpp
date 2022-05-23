@@ -106,7 +106,7 @@ bool At_Vsido_Connect_Client::unpackDataPacket()
         int dln = _sent_dln[servo_id];
         if(dad+dln>sizeof(AT_Vsido_Control_Table)/sizeof(unsigned char))return false;
 
-        unsigned char *table_ptr = &(table.tmp[0]);
+        unsigned char *table_ptr = &(table.reserved[0]);
         for (int i = 0; i < dln; i++)
         {
             table_ptr[dad + i] = pc_rstr[data_offset + i];
@@ -179,10 +179,6 @@ bool At_Vsido_Connect_Client::unpackTorquePacket()
     int servo_num = (pc_ln - 4 - 1) / 4;
     int read_offset = 4; // header op len　cycの4つを読み飛ばす
 
-    unsigned char r_op = pc_op;
-    unsigned char r_data[128];
-    int r_cnt = 0;
-
     //各id毎の処理
     for (int i = 0; i < servo_num; i++)
     {
@@ -236,4 +232,32 @@ bool At_Vsido_Connect_Client::unpackPacket()
     }
 
     return false;
+}
+
+void At_Vsido_Connect_Client::setDataPacketParam(int id, int dad, int dln)
+{
+    if (!isValidServoID(id))
+    {
+        return;
+    }
+
+    _sent_dad[id]=dad;
+    _sent_dln[id]=dln;
+}
+bool At_Vsido_Connect_Client::genDataPacket(unsigned char *packet, int *packet_ln)
+{
+    unsigned char data[VSIDO_MAXPACKETLEN];
+    int cnt=0;
+
+    for(int id=1;id<MAXSERVO;id++)
+    {
+        if(_sent_dln[id]!=0){
+        data[cnt++]=id;
+        data[cnt++] = _sent_dad[id];
+        data[cnt++] = _sent_dln[id];
+        }
+    }
+
+    genVSidoPacket('d',data,cnt,packet,packet_ln);
+
 }

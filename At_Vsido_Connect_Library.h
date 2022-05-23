@@ -63,8 +63,8 @@ class At_Vsido_Connect_Library
     int pc_timeout = 0; //タイムアウト（今は外部から利用するだけで内部参照していない）
 
     //解析用
-    bool unpack(); //旧nameの関数を残している
-    virtual bool unpackPacket(); //renameした解析関数の本体
+    bool unpack(); //旧nameの関数を念のため残す
+    virtual bool unpackPacket(); //解析関数の本体。renameした
 
     // unpackPacket内で返信パケットを生成
     unsigned char r_str[VSIDO_MAXPACKETLEN];////返信パケット
@@ -85,6 +85,9 @@ class At_Vsido_Connect_Library
     //VSidoPacket処理
     unsigned char calcSum(const unsigned char packet[], int packet_ln);
     unsigned char getStatusByte(int id);
+
+    void genVSidoPacket(unsigned char op, const unsigned char data[], int data_ln, unsigned char *packet, int *packet_len);
+
     void genVSidoCmd(unsigned char r_op, const unsigned char data[], int data_ln);
     void resetRead1byte();
     bool isEXCEPTION_VALUE(int value);

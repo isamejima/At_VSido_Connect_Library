@@ -5,25 +5,16 @@
 #define AT_VSIDO_CONNECT_CLIENT
 
 #include "At_Vsido_Connect_Library.h"
-
-#pragma pack(1)
-typedef struct
-{
-    unsigned char tmp[18];
-    short present_angle;  // 19-20
-    short present_time;   // 21-22
-    short present_speed;  // 23-24
-    short present_torque; // 25-26
-} AT_Vsido_Control_Table;
-#pragma pack()
+#include "At_Vsido_Connect_Control_Table.h"
 
 class At_Vsido_Connect_Client : public At_Vsido_Connect_Library
 {
 public:
     bool unpackPacket(); // renameした解析関数の本体
+    void setDataPacketParam(int id, int dad, int dln);
+    bool genDataPacket(unsigned char *packet,int* packet_ln);
 
-    protected:       
-    int _sent_id[VSIDO_MAXSERVO];
+protected:       
     int _sent_dad[VSIDO_MAXSERVO];
     int _sent_dln[VSIDO_MAXSERVO];
 

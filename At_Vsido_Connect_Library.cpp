@@ -356,29 +356,34 @@ unsigned char At_Vsido_Connect_Library::calcSum(const unsigned char packet[],
   return sum;
 }
 
-void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op, const unsigned char data[], int data_ln)
+void At_Vsido_Connect_Library::genVSidoPacket(unsigned char op, const unsigned char data[], int data_ln, unsigned char *packet, int *packet_len)
 {
   int cnt = 0;
-  r_ln = 0;
+  *packet_len = 0;
 
   //opが不適の場合処理しない
-  if(!isValidOP(r_op))
+  if(!isValidOP(op))
   {
     return;
   }
 
-  r_str[cnt++] = 0xff;
-  r_str[cnt++] = r_op;
-  r_str[cnt++] = 4 + data_ln;
+  packet[cnt++] = 0xff;
+  packet[cnt++] = op;
+  packet[cnt++] = 4 + data_ln;
 
   for (int i = 0; i < data_ln; i++)
   {
-    r_str[cnt++] = data[i];
+    packet[cnt++] = data[i];
   }
 
-  unsigned char sum = calcSum(r_str, cnt);
-  r_str[cnt++] = sum;
-  r_ln = cnt;
+  unsigned char sum = calcSum(packet, cnt);
+  packet[cnt++] = sum;
+  *packet_len = cnt;
+}
+
+void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op, const unsigned char data[], int data_ln)
+{
+  genVSidoPacket(r_op,data,data_ln,r_str,&r_ln);
 }
 
 unsigned char At_Vsido_Connect_Library::getStatusByte(int id)

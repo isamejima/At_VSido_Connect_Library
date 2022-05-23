@@ -45,7 +45,7 @@ void VSD_isrRx()
         continue;
 
       //解析を行う
-      if (atvsdcon.unpack() == false)
+      if (atvsdcon.unpackPacket() == false)
         continue;
 
       //解析内容が正しく、受信成功した場合の処理を書く
