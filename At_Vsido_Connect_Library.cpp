@@ -21,7 +21,20 @@ static const unsigned int MASK_ERROR = BIT_FLAG_0;
 // servo on
 static const unsigned int MASK_SERVOON = BIT_FLAG_1;
 
-At_Vsido_Connect_Library::At_Vsido_Connect_Library() {}
+At_Vsido_Connect_Library::At_Vsido_Connect_Library()
+{
+  for(int id=0;id<MAXSERVO;id++){
+  servo_angles[id]=0;
+  servo_present_angles[id] = 0;
+  servo_torques[id] = 0;
+  servo_present_torques[id] = 0;
+  
+  servo_status_servoon[id]=false;
+  servo_status_error[id]=false;
+  
+  servo_connected[id] = false;
+  }
+}
 
 short At_Vsido_Connect_Library::convertToProtocol(short raw_value)
 {
