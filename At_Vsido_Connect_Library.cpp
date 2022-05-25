@@ -245,13 +245,13 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
   for (int i = 0; i < servo_num; i++)
   {
     //値の復元
-    int servo_id = pc_rstr[read_offset + i * 3 + 0];
-    /*
+    int servo_id = (int)pc_rstr[read_offset + i * 3 + 0];
+
     if (!isValidServoID(servo_id))
     {
       return false; //適正なサーボIDが含まれていたらfalse
     }
-    */
+    
 
     int servo_angle =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
@@ -296,7 +296,7 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
   for (int i = 0; i < servo_num; i++)
   {
     //値の復元
-    int servo_id = pc_rstr[read_offset + i * 3];
+    int servo_id = (int)pc_rstr[read_offset + i * 3];
     if (!isValidServoID(servo_id))
     {
       return false; //適正なサーボIDが含まれていたらfalse
@@ -430,8 +430,6 @@ bool At_Vsido_Connect_Library::isEXCEPTION_VALUE(int value)
 
 bool At_Vsido_Connect_Library::isValidServoID(int id)
 {
-  return true;
-  /*
   if(id>=1 && id<=MAXSERVO){
     return true;
   }
@@ -447,7 +445,6 @@ bool At_Vsido_Connect_Library::isValidServoID(int id)
   }
 
   return false;
-  */
 }
 
 bool At_Vsido_Connect_Library::isValidOP(unsigned char ch)
