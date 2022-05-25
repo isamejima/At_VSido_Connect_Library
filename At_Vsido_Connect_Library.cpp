@@ -430,6 +430,8 @@ bool At_Vsido_Connect_Library::isEXCEPTION_VALUE(int value)
 
 bool At_Vsido_Connect_Library::isValidServoID(int id)
 {
+  return true;
+  /*
   if(id>=1 && id<=MAXSERVO){
     return true;
   }
@@ -445,6 +447,7 @@ bool At_Vsido_Connect_Library::isValidServoID(int id)
   }
 
   return false;
+  */
 }
 
 bool At_Vsido_Connect_Library::isValidOP(unsigned char ch)
