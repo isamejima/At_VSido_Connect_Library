@@ -50,6 +50,7 @@ short At_Vsido_Connect_Library::convertFromProtocol(short vsido_value)
   uniWord.sData = vsido_value;
   uniWord.aucData[1] = (uniWord.aucData[1] & 0x80) | (uniWord.aucData[1] >> 1);
   uniWord.sData = (uniWord.sData & 0x8000) | (uniWord.sData >> 1);
+  return uniWord.sData;
 }
 
 //  角度情報の統合
@@ -245,10 +246,12 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
   {
     //値の復元
     int servo_id = pc_rstr[read_offset + i * 3 + 0];
+    /*
     if (!isValidServoID(servo_id))
     {
       return false; //適正なサーボIDが含まれていたらfalse
     }
+    */
 
     int servo_angle =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
@@ -427,6 +430,10 @@ bool At_Vsido_Connect_Library::isEXCEPTION_VALUE(int value)
 
 bool At_Vsido_Connect_Library::isValidServoID(int id)
 {
+  if(id>=1 && id<=MAXSERVO){
+    return true;
+  }
+
   if (id < 1)
   {
     return false;
@@ -437,7 +444,7 @@ bool At_Vsido_Connect_Library::isValidServoID(int id)
     return false;
   }
 
-  return true;
+  return false;
 }
 
 bool At_Vsido_Connect_Library::isValidOP(unsigned char ch)
