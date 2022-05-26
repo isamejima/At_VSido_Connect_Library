@@ -13,12 +13,46 @@ At_Vsido_Connect_Library atvsdcon=At_Vsido_Connect_Library();
 
 void VSD_isrRx()
 {
-    while(VSD_SERIAL.available()) {    // 受信確認
-        unsigned char ch = VSD_SERIAL.read();            // 1文字だけ読み込む
-        if(atvsdcon.read1byte(ch)==false)continue;
+	// 受信確認
+    while(VSD_SERIAL.available()) {    
+	
+		// 1文字だけ読み込む
+        unsigned char ch = VSD_SERIAL.read();            
+		
+        if(atvsdcon.read1byte(ch)==false)
+			continue;
+		//解析を行う
+		if ( atvsdcon.unpackPacket()== false)
+			continue;
+		
+		VSD_SERIAL.write(atvsdcon.r_str, atvsdcon.r_ln);
     }
 }
 
+void updateServoMotor()
+{
+  // TODO　目標角度に応じてモーターを回す
+
+  //現在ステータス更新
+  for (int id = 1; id < atvsdcon.MAXSERVO; id++)
+  {
+    atvsdcon.servo_present_angles[id] = atvsdcon.servo_angles[id];   //現在角度を目標角度に
+    atvsdcon.servo_present_torques[id] = atvsdcon.servo_torques[id]; //現在トルクを目標トルクに
+
+    //サーボON状態を更新
+    if (atvsdcon.servo_torques[id] == 0)
+    {
+      atvsdcon.servo_status_servoon[id] = false; // servoeoff状態
+    }
+    else
+    {
+      atvsdcon.servo_status_servoon[id] = true; // servoon状態
+    }
+
+    //エラー情報を更新
+    atvsdcon.servo_status_error[id] = false; // torqueoff状態
+  }
+}
 
 void setup() {
   
@@ -44,8 +78,13 @@ void setup() {
 
 
 void checkALL(){//受信割込み用の関数
-  //シリアル割込み
-  while ( VSD_SERIAL.available() )VSD_isrRx();
+
+	  
+	//現在角度、ステータスバイト更新処理
+	updateServoMotor();
+
+	//シリアル割込み
+	while ( VSD_SERIAL.available() )VSD_isrRx();
 
 }
 
