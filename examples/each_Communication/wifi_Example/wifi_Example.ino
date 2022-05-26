@@ -8,7 +8,7 @@
 #define AP		2
 #define STA		3 
 
-#define COMMUNICATION_MODE  AP		//AP,STA
+#define COMMUNICATION_MODE  STA		//AP,STA
 
 
 #if COMMUNICATION_MODE == AP
@@ -36,7 +36,7 @@ At_Vsido_Connect_Library atvsdcon=At_Vsido_Connect_Library();
  
 WiFiUDP udp;
 
-void wifi_init(void)
+void setup_wifiudp(void)
 {
 	switch(COMMUNICATION_MODE){
 
@@ -57,27 +57,75 @@ void wifi_init(void)
 			WiFi.config(ip, gateway, subnet);
 		
 			break;
-
 		
 	}
+	// UDP通信の開始
+	udp.begin(localPort);  
 }
 
 
 void VSD_isrUDP()
 {
-	char packetBuffer[256]={0};
-	int packetSize = udp.parsePacket();
- 
-	if (packetSize){
+//利用可能なパケット長を確認
+  int packetSize = udp.parsePacket();
+
+  if (packetSize)
+  {
+
+    //送信元(remote)のIPアドレス・ポートを確認
+    IPAddress r_ip = udp.remoteIP();
+    int r_port = udp.remotePort();
+
+    //パケット読出し
+    char packetBuffer[255];
+    udp.read(packetBuffer, packetSize);
+
+    for (int i = 0; i < packetSize; i++)
+    {
+      char ch = packetBuffer[i];
+      if (atvsdcon.read1byte(ch) == false)
+        continue;
+
+
+      //解析を行う
+      if ( atvsdcon.unpackPacket()== false)
+        continue;
 		
-		udp.read(packetBuffer, packetSize);
+		Serial.println(atvsdcon.servo_angles[1]);
 
-		for(int i=0;i<packetSize;i++){
-			if(atvsdcon.read1byte(packetBuffer[i])==false)continue;
-		}
-
-	}
+      //返信
+      udp.beginPacket(r_ip, r_port);
+      udp.write(atvsdcon.r_str, atvsdcon.r_ln);
+      udp.endPacket();
+    }
+  }
 }
+
+void updateServoMotor()
+{
+  // TODO　目標角度に応じてモーターを回す
+
+  //現在ステータス更新
+  for (int id = 1; id < atvsdcon.MAXSERVO; id++)
+  {
+    atvsdcon.servo_present_angles[id] = atvsdcon.servo_angles[id];   //現在角度を目標角度に
+    atvsdcon.servo_present_torques[id] = atvsdcon.servo_torques[id]; //現在トルクを目標トルクに
+
+    //サーボON状態を更新
+    if (atvsdcon.servo_torques[id] == 0)
+    {
+      atvsdcon.servo_status_servoon[id] = false; // servoeoff状態
+    }
+    else
+    {
+      atvsdcon.servo_status_servoon[id] = true; // servoon状態
+    }
+
+    //エラー情報を更新
+    atvsdcon.servo_status_error[id] = false; // torqueoff状態
+  }
+}
+
 
 void setup() {
   
@@ -93,19 +141,20 @@ void setup() {
   //電源確認にLED点灯
   M5.dis.drawpix(0, 0xffffff);	
 
+  setup_wifiudp();
 
-  wifi_init();
-
-  // UDP通信の開始
-  udp.begin(localPort);  
-  
   //サーボid1を有効化
   atvsdcon.servo_connected[1]=true;	
 
 }
 
+
 void checkALL(){//受信割込み用の関数
 
+  //現在角度、ステータスバイト更新処理
+  updateServoMotor();
+
+  // vsidoパケット受信処理
   VSD_isrUDP();
 }
 

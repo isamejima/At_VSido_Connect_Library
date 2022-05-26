@@ -61,7 +61,6 @@ void VSD_isrUDP()
       if ( atvsdcon.unpackPacket()== false)
         continue;
 		
-		Serial.println(atvsdcon.servo_angles[1]);
 
       //返信
       udp.beginPacket(r_ip, r_port);
@@ -133,7 +132,6 @@ void setup() {
   //サーボid1を有効化
   atvsdcon.servo_connected[1]=true;	
   
-  Serial.begin(115200);
 }
 
 
