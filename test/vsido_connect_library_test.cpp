@@ -90,6 +90,9 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_return_test_present_minus1000)
     unsigned char form_pc_packet[] = {0xff, 0x6f, 0x08, 0x02, 0x01, 0x30, 0xf0, 0x5b};
     unsigned char return_packet[] = {0xff, 0x6f, 0x08, 0x01, 0x00, 0xf8, 0xf0, 0x91};
 
+
+    ASSERT_EQ(-900, vsido.servo_angles[1]);
+
     bool ret;
     for (int i = 0; i < 8; i++)
     {
