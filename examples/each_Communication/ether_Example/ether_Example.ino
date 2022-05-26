@@ -56,11 +56,12 @@ void VSD_isrUDP()
       if (atvsdcon.read1byte(ch) == false)
         continue;
 
+
       //解析を行う
-      if (atvsdcon.unpackPacket() == false)
+      if ( atvsdcon.unpackPacket()== false)
         continue;
-	
-	  
+		
+		Serial.println(atvsdcon.servo_angles[1]);
 
       //返信
       udp.beginPacket(r_ip, r_port);
@@ -97,7 +98,7 @@ void updateServoMotor()
 
 void setup_ethudp()
 {
-    //poEモジュール用にSPIを定義
+  //poEモジュール用にSPIを定義
   SPI.begin(SCK, MISO, MOSI, -1);
   //Ether通信開始
   Ethernet.init(CS);
@@ -151,10 +152,9 @@ void loop() {
   M5.update();
   
   
-    for(int sid=0;sid<atvsdcon.MAXSERVO;sid++){
+    for(int sid=1;sid<atvsdcon.MAXSERVO;sid++){
 		//受信角度を読み込み
 		int int_position = atvsdcon.servo_angles[sid];
-		
 		
 		
 		//受信角度をサーボに送信
