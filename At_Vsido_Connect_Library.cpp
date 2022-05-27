@@ -235,10 +235,11 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
   }
 
   int servo_num = (pc_ln - 4 - 1) / 3;
-  int read_offset = 4; // header op len　cycの4つを読み飛ばす
-
+  int cyc = (int)pc_rstr[3]; // cycle　timeを格納
+  int read_offset = 4;// header op len　cycの4つを読み飛ばす
+  //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[128];
+  unsigned char r_data[VSIDO_MAXPACKETLEN];
   int r_cnt = 0;
 
   //各id毎の処理
@@ -258,6 +259,7 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
     //例外値でなければ更新
     if (!isEXCEPTION_VALUE(servo_angle))
     {
+      servo_cycle[servo_id]=cyc;
       servo_angles[servo_id] = servo_angle;
     }
 
@@ -286,10 +288,11 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
   }
 
   int servo_num = (pc_ln - 4 - 1) / 3;
-
-  int read_offset = 4; // header op len　cycの4つを読み飛ばす
+  int cyc = (int)pc_rstr[3]; // cycle　timeを格納
+  int read_offset = 4;       // header op len　cycの4つを読み飛ばす
+  //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[128];
+  unsigned char r_data[VSIDO_MAXPACKETLEN];
   int r_cnt = 0;
 
   //各id毎の処理
@@ -307,6 +310,7 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
     //例外値でなければ更新
     if (!isEXCEPTION_VALUE(servo_torque))
     {
+      servo_cycle[servo_id] = cyc;
       servo_torques[servo_id] = servo_torque;
     }
     //返信データ

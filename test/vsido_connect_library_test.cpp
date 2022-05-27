@@ -23,8 +23,7 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test,op_o_test_target_0)
 
     EXPECT_EQ(vsido.servo_angles[1], 0);
     EXPECT_EQ(vsido.servo_present_angles[1],0);
-
-    EXPECT_EQ(vsido.r_ln,8);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
@@ -49,6 +48,7 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_test_target_900)
 
     EXPECT_EQ(vsido.servo_angles[1], 900);
     EXPECT_EQ(vsido.servo_present_angles[1], 0);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
@@ -77,12 +77,13 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_test_target_minus900)
 
     EXPECT_EQ(vsido.servo_angles[1], -900);
     EXPECT_EQ(vsido.servo_present_angles[1], 0);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
 }
 
-TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_return_test_present_minus1000)
+TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_return_test_present_minus900)
 {
     At_Vsido_Connect_Library vsido;
     vsido.servo_present_angles[1] = -900;
@@ -101,6 +102,7 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_o_return_test_present_minus1000)
 
     EXPECT_EQ(vsido.servo_angles[1], -1000);
     ASSERT_EQ(vsido.servo_present_angles[1], -900);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
@@ -149,6 +151,7 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_t_test_target_1000)
 
     EXPECT_EQ(vsido.servo_torques[1], 1000);
     EXPECT_EQ(vsido.servo_present_torques[1], 0);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
@@ -173,6 +176,7 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_t_test_target_minus1000)
 
     EXPECT_EQ(vsido.servo_torques[1], -1000);
     EXPECT_EQ(vsido.servo_present_torques[1], 0);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
 
     ASSERT_EQ(vsido.r_ln, 8);
     EXPECT_THAT(return_packet, testing::ElementsAreArray(vsido.r_str, 8));
@@ -192,12 +196,10 @@ TEST(AT_VSIDO_CONNECT_LIBRARY_Test, op_t_return_test_present_minus900)
         ret = vsido.read1byte(form_pc_packet[i]);
     }
     ASSERT_EQ(ret, true);
-
-
-    //vsido.unpackPacket();
-        vsido.unpack();
+    vsido.unpackPacket();
 
     EXPECT_EQ(vsido.servo_torques[1], -1000);
+    EXPECT_EQ(vsido.servo_cycle[1], 2);
     ASSERT_EQ(vsido.servo_present_torques[1], -900);
 
     ASSERT_EQ(vsido.r_ln, 8);
