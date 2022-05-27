@@ -50,6 +50,7 @@ short At_Vsido_Connect_Library::convertFromProtocol(short vsido_value)
   uniWord.sData = vsido_value;
   uniWord.aucData[1] = (uniWord.aucData[1] & 0x80) | (uniWord.aucData[1] >> 1);
   uniWord.sData = (uniWord.sData & 0x8000) | (uniWord.sData >> 1);
+  return uniWord.sData;
 }
 
 //  角度情報の統合
@@ -234,27 +235,31 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
   }
 
   int servo_num = (pc_ln - 4 - 1) / 3;
-  int read_offset = 4; // header op len　cycの4つを読み飛ばす
-
+  int cyc = (int)pc_rstr[3]; // cycle　timeを格納
+  int read_offset = 4;// header op len　cycの4つを読み飛ばす
+  //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[128];
+  unsigned char r_data[VSIDO_MAXPACKETLEN];
   int r_cnt = 0;
 
   //各id毎の処理
   for (int i = 0; i < servo_num; i++)
   {
     //値の復元
-    int servo_id = pc_rstr[read_offset + i * 3 + 0];
+    int servo_id = (int)pc_rstr[read_offset + i * 3 + 0];
+
     if (!isValidServoID(servo_id))
     {
       return false; //適正なサーボIDが含まれていたらfalse
     }
+    
 
     int servo_angle =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
     //例外値でなければ更新
     if (!isEXCEPTION_VALUE(servo_angle))
     {
+      servo_cycle[servo_id]=cyc;
       servo_angles[servo_id] = servo_angle;
     }
 
@@ -283,17 +288,18 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
   }
 
   int servo_num = (pc_ln - 4 - 1) / 3;
-
-  int read_offset = 4; // header op len　cycの4つを読み飛ばす
+  int cyc = (int)pc_rstr[3]; // cycle　timeを格納
+  int read_offset = 4;       // header op len　cycの4つを読み飛ばす
+  //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[128];
+  unsigned char r_data[VSIDO_MAXPACKETLEN];
   int r_cnt = 0;
 
   //各id毎の処理
   for (int i = 0; i < servo_num; i++)
   {
     //値の復元
-    int servo_id = pc_rstr[read_offset + i * 3];
+    int servo_id = (int)pc_rstr[read_offset + i * 3];
     if (!isValidServoID(servo_id))
     {
       return false; //適正なサーボIDが含まれていたらfalse
@@ -304,6 +310,7 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
     //例外値でなければ更新
     if (!isEXCEPTION_VALUE(servo_torque))
     {
+      servo_cycle[servo_id] = cyc;
       servo_torques[servo_id] = servo_torque;
     }
     //返信データ
@@ -427,6 +434,10 @@ bool At_Vsido_Connect_Library::isEXCEPTION_VALUE(int value)
 
 bool At_Vsido_Connect_Library::isValidServoID(int id)
 {
+  if(id>=1 && id<=MAXSERVO){
+    return true;
+  }
+
   if (id < 1)
   {
     return false;
@@ -437,7 +448,7 @@ bool At_Vsido_Connect_Library::isValidServoID(int id)
     return false;
   }
 
-  return true;
+  return false;
 }
 
 bool At_Vsido_Connect_Library::isValidOP(unsigned char ch)
