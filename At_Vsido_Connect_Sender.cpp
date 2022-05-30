@@ -1,4 +1,4 @@
-#include "At_Vsido_Connect_Client.h"
+#include "At_Vsido_Connect_Sender.h"
 
 static const int VSIDO_EXCEPTION_VALUE = 0x1fff; // 13bitの最大値
 
@@ -17,7 +17,7 @@ static const unsigned int MASK_ERROR = BIT_FLAG_0;
 // servo on
 static const unsigned int MASK_SERVOON = BIT_FLAG_1;
 
-AT_Vsido_Control_Table At_Vsido_Connect_Client::getControlTable(int id)
+AT_Vsido_Control_Table At_Vsido_Connect_Sender::getControlTable(int id)
 {
     AT_Vsido_Control_Table table = {0};
     if (!isValidServoID(id))
@@ -29,7 +29,7 @@ AT_Vsido_Control_Table At_Vsido_Connect_Client::getControlTable(int id)
     return table;
 }
 
-AT_Vsido_Control_Table At_Vsido_Connect_Client::TableConvertToProtocol(AT_Vsido_Control_Table raw_table)
+AT_Vsido_Control_Table At_Vsido_Connect_Sender::TableConvertToProtocol(AT_Vsido_Control_Table raw_table)
 {
     AT_Vsido_Control_Table table = raw_table;
 
@@ -42,7 +42,7 @@ AT_Vsido_Control_Table At_Vsido_Connect_Client::TableConvertToProtocol(AT_Vsido_
     return table;
 }
 
-AT_Vsido_Control_Table At_Vsido_Connect_Client::TableConvertFromProtocol(AT_Vsido_Control_Table vsido_table)
+AT_Vsido_Control_Table At_Vsido_Connect_Sender::TableConvertFromProtocol(AT_Vsido_Control_Table vsido_table)
 {
     AT_Vsido_Control_Table table = vsido_table;
 
@@ -55,7 +55,7 @@ AT_Vsido_Control_Table At_Vsido_Connect_Client::TableConvertFromProtocol(AT_Vsid
     return table;
 }
 
-int At_Vsido_Connect_Client::calcReturnDataLen()
+int At_Vsido_Connect_Sender::calcReturnDataLen()
 {
     int r_len = 0;
 
@@ -69,7 +69,7 @@ int At_Vsido_Connect_Client::calcReturnDataLen()
     return r_len;
 }
 
-int At_Vsido_Connect_Client::calcReturnServoNum()
+int At_Vsido_Connect_Sender::calcReturnServoNum()
 {
     int r_num = 0;
 
@@ -83,7 +83,7 @@ int At_Vsido_Connect_Client::calcReturnServoNum()
     return r_num;
 }
 
-bool At_Vsido_Connect_Client::unpackDataPacket()
+bool At_Vsido_Connect_Sender::unpackDataPacket()
 {
     if ((pc_ln - 4) != calcReturnDataLen())
     {
@@ -118,7 +118,7 @@ bool At_Vsido_Connect_Client::unpackDataPacket()
     return true;
 }
 
-void At_Vsido_Connect_Client::setStatusByte(int id, unsigned char status_byte)
+void At_Vsido_Connect_Sender::setStatusByte(int id, unsigned char status_byte)
 {
     if (!isValidServoID(id))
     {
@@ -128,7 +128,7 @@ void At_Vsido_Connect_Client::setStatusByte(int id, unsigned char status_byte)
     servo_status_servoon[id] &= MASK_SERVOON;
 }
 
-bool At_Vsido_Connect_Client::unpackObjectPacket()
+bool At_Vsido_Connect_Sender::unpackObjectPacket()
 {
     //データ構造がおかしければfalse
     // cycle id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc
@@ -166,7 +166,7 @@ bool At_Vsido_Connect_Client::unpackObjectPacket()
     return true;
 }
 
-bool At_Vsido_Connect_Client::unpackTorquePacket()
+bool At_Vsido_Connect_Sender::unpackTorquePacket()
 {
     //データ構造がおかしければfalse
     // cycle id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc
@@ -204,7 +204,7 @@ bool At_Vsido_Connect_Client::unpackTorquePacket()
     return true;
 }
 
-bool At_Vsido_Connect_Client::unpackPacket()
+bool At_Vsido_Connect_Sender::unpackPacket()
 {
     r_ln = 0;
 
@@ -234,7 +234,7 @@ bool At_Vsido_Connect_Client::unpackPacket()
     return false;
 }
 
-void At_Vsido_Connect_Client::setDataPacketParam(int id, int dad, int dln)
+void At_Vsido_Connect_Sender::setDataPacketParam(int id, int dad, int dln)
 {
     if (!isValidServoID(id))
     {
@@ -244,7 +244,7 @@ void At_Vsido_Connect_Client::setDataPacketParam(int id, int dad, int dln)
     _sent_dad[id]=dad;
     _sent_dln[id]=dln;
 }
-bool At_Vsido_Connect_Client::genDataPacket(unsigned char *packet, int *packet_ln)
+bool At_Vsido_Connect_Sender::genDataPacket(unsigned char *packet, int *packet_ln)
 {
     unsigned char data[VSIDO_MAXPACKETLEN];
     int cnt=0;
