@@ -100,7 +100,7 @@ void loop() {
 		//受信角度をサーボに送信
 		if(atvsdcon.servo_connected[sid]){
 			//角度情報をサーボパルス幅へ変換
-			int tar_position=(int_position+1800)*20/36+500;	
+			int tar_position=(int_position+1800)*20/36+500;
 
 			//サーボへ書き込み
 			Atom.SetServoPulse(1, tar_position);	
