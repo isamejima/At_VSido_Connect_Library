@@ -23,16 +23,19 @@ static const unsigned int MASK_SERVOON = BIT_FLAG_1;
 
 At_Vsido_Connect_Library::At_Vsido_Connect_Library()
 {
-  for(int id=0;id<MAXSERVO;id++){
-  servo_angles[id]=0;
-  servo_present_angles[id] = 0;
-  servo_torques[id] = 0;
-  servo_present_torques[id] = 0;
-  
-  servo_status_servoon[id]=false;
-  servo_status_error[id]=false;
-  
-  servo_connected[id] = false;
+  for (int id = 0; id < MAXSERVO; id++)
+  {
+    servo_angles[id] = 0;
+    servo_present_angles[id] = 0;
+    servo_torques[id] = 0;
+    servo_present_torques[id] = 0;
+    servo_cycle[id] = 0;
+    servo_angles_ofset[id] = 0;
+
+    servo_status_servoon[id] = false;
+    servo_status_error[id] = false;
+
+    servo_connected[id] = false;
   }
 }
 
@@ -56,29 +59,28 @@ short At_Vsido_Connect_Library::convertFromProtocol(short vsido_value)
 //  角度情報の統合
 short At_Vsido_Connect_Library::uniAngle(unsigned char upper,
                                          unsigned char lower)
-{
-  UNIWORD uniWord; // データ変換用共用体
-  uniWord.aucData[0] = upper;
-  uniWord.aucData[1] = lower;
+{ /*
+   UNIWORD uniWord; // データ変換用共用体
+   uniWord.aucData[0] = upper;
+   uniWord.aucData[1] = lower;
 
-  short raw_angle=convertFromProtocol(uniWord.sData);
-  return raw_angle;
+   short raw_angle=convertFromProtocol(uniWord.sData);
+   return raw_angle;
+ */
 
-/*
   UNIWORD uniWord; // データ変換用共用体
   uniWord.aucData[0] = upper;
   uniWord.aucData[1] = (lower & 0x80) | (lower >> 1);
   uniWord.sData = (uniWord.sData & 0x8000) | (uniWord.sData >> 1);
 
   return uniWord.sData;
-  */
 }
 //  角度情報の分割
 void At_Vsido_Connect_Library::divAngle(short data, unsigned char *upper,
                                         unsigned char *lower)
 {
   UNIWORD uniWord; // データ変換用共用体
-  uniWord.sData=convertToProtocol(data);
+  uniWord.sData = convertToProtocol(data);
   *upper = uniWord.aucData[0];
   *lower = uniWord.aucData[1];
 
@@ -175,7 +177,7 @@ bool At_Vsido_Connect_Library::unpackDataPacket()
   int read_offset = 3; // header op lenの3つを読み飛ばす
 
   unsigned char r_op = pc_op;
-  unsigned char r_data[128];
+  unsigned char r_data[128]={};
   int r_cnt = 0;
 
   //各id毎の処理
@@ -236,10 +238,10 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
 
   int servo_num = (pc_ln - 4 - 1) / 3;
   int cyc = (int)pc_rstr[3]; // cycle　timeを格納
-  int read_offset = 4;// header op len　cycの4つを読み飛ばす
+  int read_offset = 4;       // header op len　cycの4つを読み飛ばす
   //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[VSIDO_MAXPACKETLEN];
+  unsigned char r_data[VSIDO_MAXPACKETLEN] = {};
   int r_cnt = 0;
 
   //各id毎の処理
@@ -252,14 +254,13 @@ bool At_Vsido_Connect_Library::unpackObjectPacket()
     {
       return false; //適正なサーボIDが含まれていたらfalse
     }
-    
 
     int servo_angle =
         uniAngle(pc_rstr[read_offset + i * 3 + 1], pc_rstr[read_offset + i * 3 + 2]);
     //例外値でなければ更新
     if (!isEXCEPTION_VALUE(servo_angle))
     {
-      servo_cycle[servo_id]=cyc;
+      servo_cycle[servo_id] = cyc;
       servo_angles[servo_id] = servo_angle;
     }
 
@@ -292,7 +293,7 @@ bool At_Vsido_Connect_Library::unpackTorquePacket()
   int read_offset = 4;       // header op len　cycの4つを読み飛ばす
   //返信用変数
   unsigned char r_op = pc_op;
-  unsigned char r_data[VSIDO_MAXPACKETLEN];
+  unsigned char r_data[VSIDO_MAXPACKETLEN] = {};
   int r_cnt = 0;
 
   //各id毎の処理
@@ -381,8 +382,8 @@ void At_Vsido_Connect_Library::genVSidoPacket(unsigned char op, const unsigned c
   int cnt = 0;
   *packet_len = 0;
 
-  //opが不適の場合処理しない
-  if(!isValidOP(op))
+  // opが不適の場合処理しない
+  if (!isValidOP(op))
   {
     return;
   }
@@ -403,7 +404,7 @@ void At_Vsido_Connect_Library::genVSidoPacket(unsigned char op, const unsigned c
 
 void At_Vsido_Connect_Library::genVSidoCmd(unsigned char r_op, const unsigned char data[], int data_ln)
 {
-  genVSidoPacket(r_op,data,data_ln,r_str,&r_ln);
+  genVSidoPacket(r_op, data, data_ln, r_str, &r_ln);
 }
 
 unsigned char At_Vsido_Connect_Library::getStatusByte(int id)
@@ -434,7 +435,8 @@ bool At_Vsido_Connect_Library::isEXCEPTION_VALUE(int value)
 
 bool At_Vsido_Connect_Library::isValidServoID(int id)
 {
-  if(id>=1 && id<=MAXSERVO){
+  if (id >= 1 && id <= MAXSERVO)
+  {
     return true;
   }
 
