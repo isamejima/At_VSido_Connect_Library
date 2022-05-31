@@ -12,10 +12,97 @@ static const unsigned int BIT_FLAG_5 = (1 << 5); // 0000 0000 0010 0000
 static const unsigned int BIT_FLAG_6 = (1 << 6); // 0000 0000 0100 0000
 static const unsigned int BIT_FLAG_7 = (1 << 7); // 0000 0000 1000 0000
 
-// error fN
+// error
 static const unsigned int MASK_ERROR = BIT_FLAG_0;
 // servo on
 static const unsigned int MASK_SERVOON = BIT_FLAG_1;
+
+void At_Vsido_Connect_Sender::setCycle(int cyc)
+{
+    for(int id=0;id<MAXSERVO;id++){
+        if(servo_connected[id]){
+                    servo_cycle[id]=cyc;
+        }
+    }
+}
+
+void At_Vsido_Connect_Sender::setObjectPacketParam(int id, int angle)
+{
+    if(!isValidServoID(id))return;
+
+    if(servo_connected[id]==false){
+        servo_connected[id]=true;
+    }   
+    servo_angles[id]=angle;
+}
+void At_Vsido_Connect_Sender::setToruqePacketParam(int id, int torque)
+{
+    if(!isValidServoID(id))return;
+
+    if(servo_connected[id]==false){
+        servo_connected[id]=true;
+    }   
+    servo_torques[id]=torque;
+}
+
+bool At_Vsido_Connect_Sender::genObjectPacket(int cyc,unsigned char *packet, int *packet_ln)
+{
+    unsigned char data[MAXSERVO*3]={};
+    unsigned char lower=0;
+    unsigned char upper=0;
+    int cnt=0;
+
+    data[cnt++]=(unsigned char)cyc;
+
+    for(int id=1;id<MAXSERVO;id++){
+        if(servo_connected)
+        {
+            data[cnt++]=id;
+            divAngle(servo_angles[id],&upper,&lower);
+            data[cnt++]=upper;
+            data[cnt++]=lower;
+        }
+    }
+
+    if(cnt==1){
+        return false;
+    }
+
+    genVSidoPacket('o',data,cnt,packet,packet_ln);
+
+    if(packet_ln==0)return false;
+
+    return true;
+}
+
+bool At_Vsido_Connect_Sender::genTorquePacket(int cyc,unsigned char *packet, int *packet_ln)
+{
+    unsigned char data[MAXSERVO*3]={};
+    unsigned char lower=0;
+    unsigned char upper=0;
+    int cnt=0;
+
+    data[cnt++]=(unsigned char)cyc;
+
+    for(int id=1;id<MAXSERVO;id++){
+        if(servo_connected)
+        {
+            data[cnt++]=id;
+            divAngle(servo_torques[id],&upper,&lower);
+            data[cnt++]=upper;
+            data[cnt++]=lower;
+        }
+    }
+
+    if(cnt==1){
+        return false;
+    }
+
+    genVSidoPacket('t',data,cnt,packet,packet_ln);
+
+    return true;
+
+}
 
 AT_Vsido_Control_Table At_Vsido_Connect_Sender::getControlTable(int id)
 {
@@ -98,22 +185,23 @@ bool At_Vsido_Connect_Sender::unpackDataPacket()
         int servo_id = pc_rstr[data_offset];
         data_offset++;
 
-        AT_Vsido_Control_Table table =getControlTable(servo_id);//table取得
+        AT_Vsido_Control_Table table = getControlTable(servo_id); // table取得
 
         table = TableConvertToProtocol(table); // vsidotableに変換
 
         int dad = _sent_dad[servo_id];
         int dln = _sent_dln[servo_id];
-        if(dad+dln>sizeof(AT_Vsido_Control_Table)/sizeof(unsigned char))return false;
+        if (dad + dln > sizeof(AT_Vsido_Control_Table) / sizeof(unsigned char))
+            return false;
 
         unsigned char *table_ptr = &(table.reserved[0]);
         for (int i = 0; i < dln; i++)
         {
             table_ptr[dad + i] = pc_rstr[data_offset + i];
         }
-        table=TableConvertFromProtocol(table);//vsido型からrawに変換
-        setControlTable(servo_id,table);//値をセット
-        data_offset+=dln;
+        table = TableConvertFromProtocol(table); // vsido型からrawに変換
+        setControlTable(servo_id, table);        //値をセット
+        data_offset += dln;
     }
     return true;
 }
@@ -241,23 +329,23 @@ void At_Vsido_Connect_Sender::setDataPacketParam(int id, int dad, int dln)
         return;
     }
 
-    _sent_dad[id]=dad;
-    _sent_dln[id]=dln;
+    _sent_dad[id] = dad;
+    _sent_dln[id] = dln;
 }
 bool At_Vsido_Connect_Sender::genDataPacket(unsigned char *packet, int *packet_ln)
 {
     unsigned char data[VSIDO_MAXPACKETLEN];
-    int cnt=0;
+    int cnt = 0;
 
-    for(int id=1;id<MAXSERVO;id++)
+    for (int id = 1; id < MAXSERVO; id++)
     {
-        if(_sent_dln[id]!=0){
-        data[cnt++]=id;
-        data[cnt++] = _sent_dad[id];
-        data[cnt++] = _sent_dln[id];
+        if (_sent_dln[id] != 0)
+        {
+            data[cnt++] = id;
+            data[cnt++] = _sent_dad[id];
+            data[cnt++] = _sent_dln[id];
         }
     }
 
-    genVSidoPacket('d',data,cnt,packet,packet_ln);
-
+    genVSidoPacket('d', data, cnt, packet, packet_ln);
 }

@@ -12,13 +12,14 @@ class At_Vsido_Connect_Sender : public At_Vsido_Connect_Library
 public:
     bool unpackPacket() override; // renameした解析関数の本体
 
+    void setCycle(int cyc);
     void setObjectPacketParam(int id, int angle);
     void setToruqePacketParam(int id, int torque);
     void setDataPacketParam(int id, int dad, int dln);
 
     bool genDataPacket(unsigned char *packet, int *packet_ln);
-    bool genObjectPacket(unsigned char *packet, int *packet_ln);
-    bool genTorquePacket(unsigned char *packet, int *packet_ln);
+    bool genObjectPacket(int cyc,unsigned char *packet, int *packet_ln);
+    bool genTorquePacket(int cyc,unsigned char *packet, int *packet_ln);
 
 protected:
     bool servo_sent[VSIDO_MAXSERVO]; //送信したかどうか

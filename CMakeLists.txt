@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
-project(AtVsidoConnectLibrary)
+
+set(CMAKE_CXX_COMPILER_FORCED 1)
+project(AtVsidoConnectLibrary CXX)
+
 
 add_library(lib${PROJECT_NAME})
 target_sources(lib${PROJECT_NAME}
     PRIVATE
+    At_Vsido_Connect_Sender.cpp    
     At_Vsido_Connect_Library.cpp
 )
 
@@ -14,5 +18,5 @@ target_link_libraries(test
     lib${PROJECT_NAME}
     gtest
     gtest_main
-    gmock  #今回は使わないけど
+    gmock
     pthread)
