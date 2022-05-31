@@ -59,21 +59,22 @@ short At_Vsido_Connect_Library::convertFromProtocol(short vsido_value)
 //  角度情報の統合
 short At_Vsido_Connect_Library::uniAngle(unsigned char upper,
                                          unsigned char lower)
-{ /*
+{ 
    UNIWORD uniWord; // データ変換用共用体
    uniWord.aucData[0] = upper;
    uniWord.aucData[1] = lower;
 
    short raw_angle=convertFromProtocol(uniWord.sData);
    return raw_angle;
- */
-
+ 
+/*
   UNIWORD uniWord; // データ変換用共用体
   uniWord.aucData[0] = upper;
   uniWord.aucData[1] = (lower & 0x80) | (lower >> 1);
   uniWord.sData = (uniWord.sData & 0x8000) | (uniWord.sData >> 1);
 
   return uniWord.sData;
+  */
 }
 //  角度情報の分割
 void At_Vsido_Connect_Library::divAngle(short data, unsigned char *upper,
