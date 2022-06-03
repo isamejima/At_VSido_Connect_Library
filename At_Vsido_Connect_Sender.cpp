@@ -19,91 +19,102 @@ static const unsigned int MASK_SERVOON = BIT_FLAG_1;
 
 void At_Vsido_Connect_Sender::setCycle(int cyc)
 {
-    for(int id=0;id<MAXSERVO;id++){
-        if(servo_connected[id]){
-                    servo_cycle[id]=cyc;
+    for (int id = 0; id < MAXSERVO; id++)
+    {
+        if (servo_connected[id])
+        {
+            servo_cycle[id] = cyc;
         }
     }
 }
 
 void At_Vsido_Connect_Sender::setObjectPacketParam(int id, int angle)
 {
-    if(!isValidServoID(id))return;
+    if (!isValidServoID(id))
+        return;
 
-    if(servo_connected[id]==false){
-        servo_connected[id]=true;
-    }   
-    servo_angles[id]=angle;
+    if (servo_connected[id] == false)
+    {
+        servo_connected[id] = true;
+    }
+    servo_angles[id] = angle;
 }
 void At_Vsido_Connect_Sender::setToruqePacketParam(int id, int torque)
 {
-    if(!isValidServoID(id))return;
+    if (!isValidServoID(id))
+        return;
 
-    if(servo_connected[id]==false){
-        servo_connected[id]=true;
-    }   
-    servo_torques[id]=torque;
+    if (servo_connected[id] == false)
+    {
+        servo_connected[id] = true;
+    }
+    servo_torques[id] = torque;
 }
 
-bool At_Vsido_Connect_Sender::genObjectPacket(int cyc,unsigned char *packet, int *packet_ln)
+bool At_Vsido_Connect_Sender::genObjectPacket(int cyc, unsigned char *packet, int *packet_ln)
 {
-    unsigned char data[MAXSERVO*3]={};
-    unsigned char lower=0;
-    unsigned char upper=0;
-    int cnt=0;
+    unsigned char data[MAXSERVO * 3] = {};
+    unsigned char lower = 0;
+    unsigned char upper = 0;
+    int cnt = 0;
 
-    data[cnt++]=(unsigned char)cyc;
+    data[cnt++] = (unsigned char)cyc;
 
-    for(int id=1;id<MAXSERVO;id++){
-        if(servo_connected)
+    for (int id = 1; id < MAXSERVO; id++)
+    {
+        if (servo_connected[id])
         {
-            data[cnt++]=id;
-            divAngle(servo_angles[id],&upper,&lower);
-            data[cnt++]=upper;
-            data[cnt++]=lower;
+            data[cnt++] = id;
+            divAngle(servo_angles[id], &upper, &lower);
+            data[cnt++] = upper;
+            data[cnt++] = lower;
         }
     }
 
-    if(cnt==1){
+    if (cnt == 1)
+    {
         return false;
     }
+    genVSidoPacket('o', data, cnt, packet, packet_ln);
 
-    genVSidoPacket('o',data,cnt,packet,packet_ln);
-
-    if(packet_ln==0)return false;
+    if (packet_ln == 0)
+        return false;
 
     return true;
 }
 
-bool At_Vsido_Connect_Sender::genTorquePacket(int cyc,unsigned char *packet, int *packet_ln)
+bool At_Vsido_Connect_Sender::genTorquePacket(int cyc, unsigned char *packet, int *packet_ln)
 {
-    unsigned char data[MAXSERVO*3]={};
-    unsigned char lower=0;
-    unsigned char upper=0;
-    int cnt=0;
+    unsigned char data[MAXSERVO * 3] = {};
+    unsigned char lower = 0;
+    unsigned char upper = 0;
+    int cnt = 0;
 
-    data[cnt++]=(unsigned char)cyc;
+    data[cnt++] = (unsigned char)cyc;
 
-    for(int id=1;id<MAXSERVO;id++){
-        if(servo_connected)
+    for (int id = 1; id < MAXSERVO; id++)
+    {
+        if (servo_connected[id])
         {
-            data[cnt++]=id;
-            divAngle(servo_torques[id],&upper,&lower);
-            data[cnt++]=upper;
-            data[cnt++]=lower;
+            data[cnt++] = id;
+            divAngle(servo_torques[id], &upper, &lower);
+            data[cnt++] = upper;
+            data[cnt++] = lower;
         }
     }
 
-    if(cnt==1){
+    if (cnt == 1)
+    {
         return false;
     }
 
-    genVSidoPacket('t',data,cnt,packet,packet_ln);
+    genVSidoPacket('t', data, cnt, packet, packet_ln);
 
     return true;
-
 }
-
+void At_Vsido_Connect_Sender::setControlTable(int id, AT_Vsido_Control_Table table)
+{
+}
 AT_Vsido_Control_Table At_Vsido_Connect_Sender::getControlTable(int id)
 {
     AT_Vsido_Control_Table table = {0};
