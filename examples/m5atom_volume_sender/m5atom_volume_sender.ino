@@ -1,6 +1,6 @@
 #include <MCP_ADC.h>
 #include <At_Vsido_Connect_Sender.h>
-#include "BluetoothSerial.h"
+#include <BluetoothSerial.h>
 
 #define SCK 22
 #define MISO 23
