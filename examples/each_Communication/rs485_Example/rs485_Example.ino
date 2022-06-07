@@ -73,6 +73,9 @@ void setup() {
   
   //サーボid1を有効化
   atvsdcon.servo_connected[1]=true;	
+  atvsdcon.servo_connected[2]=true;	
+  atvsdcon.servo_connected[3]=true;	
+  atvsdcon.servo_connected[4]=true;	
 
 }
 
@@ -93,7 +96,7 @@ void loop() {
   M5.update();
   
   
-    for(int sid=0;sid<atvsdcon.MAXSERVO;sid++){
+    for(int sid=1;sid<atvsdcon.MAXSERVO;sid++){
 		//受信角度を読み込み
 		int int_position = atvsdcon.servo_angles[sid];
 		
@@ -103,7 +106,7 @@ void loop() {
 			int tar_position=(int_position+1800)*20/36+500;
 
 			//サーボへ書き込み
-			Atom.SetServoPulse(1, tar_position);	
+			Atom.SetServoPulse(sid, tar_position);	
 
 		}
 		//V-Sidoプロトコルの受信割込み
