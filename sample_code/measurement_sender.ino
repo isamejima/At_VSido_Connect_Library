@@ -27,14 +27,15 @@ MCP3208 mcp(MISO, MOSI, SCK);
 //#define VSD_SERIAL Serial2
 #define DEBUG_SERIAL Serial
 
-unsigned long loop_time;
-unsigned long average_time;
-unsigned long last_time;
-int countup=0;
-int send_count=0;
-int receive_count=0;
+unsigned long debug_loop_time_us;
+unsigned long debug_last_time_us;
+int debug_countup = 0;
+int debug_send_count = 0;
+int debug_receive_count = 0;
 
-unsigned long debug_last_time;
+unsigned long last_update_ms;
+unsigned long elapsed_ms;
+unsigned long loop_interval_ms=4;
 
 void VSD_isrRx()
 {
@@ -45,33 +46,44 @@ void VSD_isrRx()
     {
       continue;
     }
-          receive_count++;
+
     bool ret = atvsidosender.unpackPacket();
     if (ret == true)
     {
-//      receive_count++;
+      debug_receive_count++;
     }
   }
 }
 
-void setup_mcp(){
-  mcp.begin(CS);
-
-/*
-  DEBUG_SERIAL.println();
-  DEBUG_SERIAL.println("ADC\tCHAN\tMAXVALUE");
-  DEBUG_SERIAL.print("mcp\t");
-  DEBUG_SERIAL.print(mcp.channels());
-  DEBUG_SERIAL.print("\t");
-  DEBUG_SERIAL.println(mcp.maxValue());  
-  */
+void checkALL()
+{ //受信割込み用の関数
+  //シリアル割込み
+  while (VSD_SERIAL.available())
+    VSD_isrRx();
+  // UDP割り込み処理を入れるならここ
+  /****/
 }
 
-void setup_bt(){
+void setup_mcp()
+{
+  mcp.begin(CS);
+
+  /*
+    DEBUG_SERIAL.println();
+    DEBUG_SERIAL.println("ADC\tCHAN\tMAXVALUE");
+    DEBUG_SERIAL.print("mcp\t");
+    DEBUG_SERIAL.print(mcp.channels());
+    DEBUG_SERIAL.print("\t");
+    DEBUG_SERIAL.println(mcp.maxValue());
+    */
+}
+
+void setup_bt()
+{
   DEBUG_SERIAL.println(String("Connecting to ") + target_name + " ...");
-   // bt初期化
+  // bt初期化
   SerialBT.begin("VSidoConnect_AtomVolume", true);
-  
+
   bool connected = SerialBT.connect(target_name);
   // bool connected = SerialBT.connect(address);
 
@@ -88,19 +100,25 @@ void setup_bt(){
   }
 }
 
-void setup_vsidosender(){
+void setup_vsidosender()
+{
+  /*
   atvsidosender.servo_connected[1] = true;
   atvsidosender.servo_connected[2] = true;
   atvsidosender.servo_connected[3] = true;
   atvsidosender.servo_connected[4] = true;
+  */
+ //30サーボ分、送信125 byte,受信124byte
+  for(int id=1;id<31;id++){
+    atvsidosender.servo_connected[id] = true;
+  }
 }
-
 
 void setup()
 {
-  M5.begin(false,false,true);
-  M5.dis.drawpix(0,0xFF0000);
-  
+  M5.begin(false, false, true);
+  M5.dis.drawpix(0, 0xFF0000);
+
   delay(100);
   DEBUG_SERIAL.begin(115200);
   setup_mcp();
@@ -108,59 +126,61 @@ void setup()
   setup_vsidosender();
 
   setup_bt();
-//Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  // Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
 
+  M5.dis.drawpix(0, 0x0000FF);
 
-  M5.dis.drawpix(0,0x0000FF);
-
-  last_time=micros();
-  countup=0;
+  debug_last_time = micros();
+  debug_countup = 0;
 }
 
 void loop()
 {
+  elapsed_ms = mills() - last_update_ms;
 
-  countup+=2;
-  if(countup>=200)
-  {
-    countup=0;
-  }    
-//  dacWrite(26,countup);
-  
-  for (int channel = 0; channel < mcp.channels(); channel++)
-  {
-    uint16_t val = mcp.analogRead(channel);
-    if (atvsidosender.servo_connected[channel + 1])
+  if (elapsed_ms > loop_interval_ms)
+  {   
+    debug_countup += 2;
+    if (debug_countup >= 200)
     {
-      int max_value = mcp.maxValue();
-      int center_value = max_value / 2;
-      atvsidosender.servo_angles[channel + 1] = (center_value - val) * 1350 / center_value;
-//      DEBUG_SERIAL.print(atvsidosender.servo_angles[channel + 1]);
-//      DEBUG_SERIAL.print("\t");
+      debug_countup = 0;
     }
+    //  dacWrite(26,countup);//dac出力更新
+
+    for (int channel = 0; channel < mcp.channels(); channel++)
+    {
+      uint16_t val = mcp.analogRead(channel);
+      if (atvsidosender.servo_connected[channel + 1])
+      {
+        int max_value = mcp.maxValue();
+        int center_value = max_value / 2;
+        atvsidosender.servo_angles[channel + 1] = (center_value - val) * 1350 / center_value;
+      }
+    }
+    atvsidosender.genObjectPacket(2, sendbuf, &send_len);
+    VSD_SERIAL.write(sendbuf, send_len);
+    send_count++;
+
+    if (countup == 0)
+    {
+      debug_loop_time_us = (micros() - debug_last_time_us) / 100;
+
+      DEBUG_SERIAL.print("send_count:");
+      DEBUG_SERIAL.print(debug_send_count);
+      DEBUG_SERIAL.print(",");
+      DEBUG_SERIAL.print("receive_count:");
+      DEBUG_SERIAL.print(debug_receive_count);
+      DEBUG_SERIAL.print(",");
+      DEBUG_SERIAL.print("loop_time:");
+      DEBUG_SERIAL.print(debug_loop_time_us);
+      DEBUG_SERIAL.println("");
+      debug_last_time_us = micros();
+      debug_send_count = 0;
+      debug_receive_count = 0;
+    }
+    int offset=mills() - last_update_ms;
+    last_update_ms = mills();
   }
-  atvsidosender.genObjectPacket(2, sendbuf, &send_len);
-  VSD_SERIAL.write(sendbuf, send_len);
-  send_count++;
 
-//  delayMicroseconds(4);
-    delay(8);
-  VSD_isrRx();
-  
-  if(countup==0){
-    loop_time=(micros()-last_time)/100;
-
-    DEBUG_SERIAL.print("send_count:");
-    DEBUG_SERIAL.print(send_count);
-    DEBUG_SERIAL.print(",");
-    DEBUG_SERIAL.print("receive_count:");
-    DEBUG_SERIAL.print(receive_count);
-    DEBUG_SERIAL.print(",");
-    DEBUG_SERIAL.print("loop_time:");
-    DEBUG_SERIAL.print(loop_time);
-    DEBUG_SERIAL.println("");
-    last_time=micros();
-    send_count=0;
-    receive_count=0;
-  } 
+  checkALL();
 }
