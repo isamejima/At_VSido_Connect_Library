@@ -8,7 +8,7 @@
 #define AP		2
 #define STA		3 
 
-#define COMMUNICATION_MODE  STA		//AP,STA
+#define COMMUNICATION_MODE  AP		//AP,STA
 
 #define VSIDO_MAXSERVO 32
 

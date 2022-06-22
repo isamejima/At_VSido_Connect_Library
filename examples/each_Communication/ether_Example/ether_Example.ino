@@ -11,6 +11,7 @@
 #define MOSI 33
 #define CS 19
 
+
 #define ETH		1
 
 #define COMMUNICATION_MODE  ETH		//ETH,AP,STA
@@ -27,6 +28,7 @@
 #endif
 
 AtomMotion Atom;
+
 // V-SIdo Connectライブラリ
 At_Vsido_Connect_Library atvsdcon = At_Vsido_Connect_Library();
 
@@ -144,9 +146,6 @@ void setup() {
   //電源確認にLED点灯
   M5.dis.drawpix(0, 0xffffff);	
 
-  //poEモジュール用にSPIを定義
-  SPI.begin(SCK, MISO, MOSI, -1);
-  
 
   setup_ethudp();
   
@@ -173,6 +172,17 @@ void checkALL(){//受信割込み用の関数
 
   // vsidoパケット受信処理
   VSD_isrUDP();
+  
+	if(get_packet_flag == true ){
+		
+		get_packet_flag=false;
+		
+		for(int sid=1;sid<atvsdcon.MAXSERVO;sid++){
+			control_servo[sid].target_position = atvsdcon.servo_angles[sid];
+			control_servo[sid].remaining_cyc = atvsdcon.servo_cycle[sid];
+		
+		}	
+	}
 }
 
 void loop() {
@@ -193,13 +203,7 @@ void loop() {
 			control_servo[sid].remaining_cyc-=tim;
 			if(control_servo[sid].remaining_cyc<0)control_servo[sid].remaining_cyc=0;
 			
-			
-			if(get_packet_flag == true ){
-				
-				control_servo[sid].target_position = atvsdcon.servo_angles[sid];
-				control_servo[sid].remaining_cyc = atvsdcon.servo_cycle[sid];
-				
-			}
+
 			
 			if(control_servo[sid].remaining_cyc>0){
 				move_position =  control_servo[sid].now_position + 
@@ -219,18 +223,18 @@ void loop() {
 			//サーボへ書き込み
 			Atom.SetServoPulse(sid, move_position);
 			
-			if(sid==1){
+			/*if(sid==1){
 				Serial.print(control_servo[sid].target_position);
 				Serial.print(",");
 				Serial.println(control_servo[sid].now_position);
 				
-			}
+			}*/
 
 		}
-		
+		//V-Sidoプロトコルの受信割込み
+		checkALL();
 	}
-	
-	if(get_packet_flag==true)get_packet_flag=false;
-	//V-Sidoプロトコルの受信割込み
-	checkALL();
+
+
+
 }

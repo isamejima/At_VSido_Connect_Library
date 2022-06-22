@@ -28,6 +28,7 @@
 #endif
 
 PCA9685 pwm = PCA9685(0x40);    //PCA9685のアドレス指定（アドレスジャンパ未接続時）
+PCA9685 pwm2 = PCA9685(0x41);    //PCA9685のアドレス指定（アドレスジャンパ未接続時）
 // V-SIdo Connectライブラリ
 At_Vsido_Connect_Library atvsdcon = At_Vsido_Connect_Library();
 
@@ -136,6 +137,9 @@ void setup() {
   
   pwm.begin();                   //初期設定 (アドレス0x40用)
   pwm.setPWMFreq(50);            //PWM周期を60Hzに設定 (アドレス0x40用)
+  
+  pwm2.begin();                   //初期設定 (アドレス0x40用)
+  pwm2.setPWMFreq(50);            //PWM周期を60Hzに設定 (アドレス0x40用)
 
   //M5.beginのあとは他の処理の前に少し待機
   delay(100);	
@@ -156,10 +160,12 @@ void setup() {
   
   
   //サーボ4つをを有効化
-  atvsdcon.servo_connected[1]=true;	
-  atvsdcon.servo_connected[2]=true;	
-  atvsdcon.servo_connected[3]=true;	
-  atvsdcon.servo_connected[4]=true;	
+  
+  for(int i=0;i<=32;i++){
+  
+	atvsdcon.servo_connected[i]=true;	
+  }
+  
   
 }
 
@@ -214,9 +220,12 @@ void loop() {
 			//角度情報をサーボパルス幅へ変換
 			//0xFFFが1周期(20ms)でサーボの駆動はduty幅1.5ms-2.5ms
 			move_position = map(move_position, -1800, 1800, 102, 512);
-			pwm.setPWM(sid-1, 0, move_position);
-			
-
+			if(sid>=1&&sid<=16){
+				pwm.setPWM(sid-1, 0, move_position);
+			}
+			else if(sid>=17&&sid<=32){
+				pwm2.setPWM(sid-17, 0, move_position);	
+			}
 
 		}
 		
