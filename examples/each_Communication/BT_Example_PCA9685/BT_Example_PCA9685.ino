@@ -3,7 +3,7 @@
 #include <At_Vsido_Connect_Library.h>
 
 #include <Wire.h>
-#include <PCA9685.h>            //PCA9685用ヘッダーファイル（秋月電子通商作成）
+#include "PCA9685.h"            //PCA9685用ヘッダーファイル（秋月電子通商作成） I2Cのピンに関してコードを変更
 
 #define VSD_SERIAL SerialBT
 #define DEBUG_SERIAL Serial

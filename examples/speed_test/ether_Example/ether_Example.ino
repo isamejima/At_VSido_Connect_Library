@@ -64,13 +64,16 @@ void VSD_isrUDP()
       if (atvsdcon.read1byte(ch) == false)
         continue;
 
-	  debug_out_level ^= 1;//high lowのtoggle
+	  debug_out_level = 1;//high lowのtoggle
 	  digitalWrite(DEBUG_OUTPUT_PIN, debug_out_level);
 
 
       //解析を行う
       if ( atvsdcon.unpackPacket()== false)
         continue;
+	
+	  debug_out_level = 0;//high lowのtoggle
+	  digitalWrite(DEBUG_OUTPUT_PIN, debug_out_level);
 	
 
       //返信

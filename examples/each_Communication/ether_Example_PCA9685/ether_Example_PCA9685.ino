@@ -5,7 +5,7 @@
 #include "At_Vsido_Connect_Library.h"
 
 #include <Wire.h>
-#include <PCA9685.h>            //PCA9685用ヘッダーファイル（秋月電子通商作成）
+#include "PCA9685.h"            //PCA9685用ヘッダーファイル（秋月電子通商作成）　I2C部分に関して、ピンを変更
 
 #define SCK 22
 #define MISO 23
