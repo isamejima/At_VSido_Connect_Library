@@ -1,6 +1,6 @@
 # 概要
 [Atom Motion](https://docs.m5stack.com/en/atom/atom_motion) を使用したAtom Lite用V-sidoプロトコル受信サンプル.  
-このサンプル群ではAtom Motionの上限である4個のPWMサーボの動作を確認した.
+このサンプル群ではAtom Motionの上限である4個のPWMサーボの動作を確認した.  
 Atom Motionライブラリは公式ライブラリのものを使用
  
 # 構成
