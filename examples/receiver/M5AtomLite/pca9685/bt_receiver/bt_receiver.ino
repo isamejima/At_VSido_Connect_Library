@@ -76,8 +76,8 @@ void setup() {
   delay(50);
   pwm2.begin();                   //初期設定 (アドレス0x41用)
   pwm2.setPWMFreq(50);            //PWM周期を60Hzに設定 (アドレス0x41用)   
-　 delay(50);	
- 
+  delay(50);	
+  
   //起動したら赤色LEDに
   M5.dis.drawpix(0, 0xff0000);
   delay(50);

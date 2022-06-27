@@ -9,7 +9,8 @@
 #define RX_PIN      32
 #define TX_PIN      26
  
-AtomMotion Atom;
+PCA9685 pwm = PCA9685(0x41);    //PCA9685のアドレス指定（アドレスジャンパA0をClose）
+PCA9685 pwm2 = PCA9685(0x40);    //PCA9685のアドレス指定（アドレスジャンパすべてOpen）
 At_Vsido_Connect_Library atvsdcon=At_Vsido_Connect_Library();
 
 void VSD_isrRx()
@@ -68,7 +69,7 @@ void setup() {
   delay(50);
   pwm2.begin();                   //初期設定 (アドレス0x41用)
   pwm2.setPWMFreq(50);            //PWM周期を60Hzに設定 (アドレス0x41用)   
-　 delay(50);	
+  delay(50);	
 
   
   //起動したら赤色LEDに

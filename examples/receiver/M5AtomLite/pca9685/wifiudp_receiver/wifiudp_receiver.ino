@@ -22,12 +22,12 @@
 	const IPAddress subnet(255, 255, 255, 0);	// サブネットマスク
 
 #elif COMMUNICATION_MODE == STA	
-	const char ssid[] = "Knet";	// SSID
-	const char pass[] = "9e29366d213523346617f1b851d9bf8e3ef2f05a62e42bd1a207fbbcdf5fd3f5";	// password
+	const char ssid[] = "xxxxxxxx";	// SSID
+	const char pass[] = "xxxxxxxx";	// password
 	const int localPort = 8888;			// ポート番号
 
-	const IPAddress ip(192, 168, 11, 40);		// IPアドレス
-	const IPAddress gateway(192, 168,11, 0);	// (ゲートウェイ)
+	const IPAddress ip(192, 168, 100, 40);		// IPアドレス
+	const IPAddress gateway(192, 168,100, 0);	// (ゲートウェイ)
 	const IPAddress subnet(255, 255, 255, 0);	// サブネットマスク
 
 #endif
@@ -142,7 +142,7 @@ void setup() {
   delay(50);
   pwm2.begin();                   //初期設定 (アドレス0x41用)
   pwm2.setPWMFreq(50);            //PWM周期を60Hzに設定 (アドレス0x41用)   
-　 delay(50);
+  delay(50);
   
   //起動したら赤色LEDに
   M5.dis.drawpix(0, 0xff0000);

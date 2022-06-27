@@ -14,7 +14,7 @@
 
 #define DEBUG_SERIAL Serial
 #define ADC_PIN 34
-#define DEBUG_OUTPUT_PIN 22
+#define DEBUG_OUTPUT_PIN 32
 
 int debug_out_level=LOW;
 
@@ -29,12 +29,12 @@ int debug_out_level=LOW;
 	const IPAddress subnet(255, 255, 255, 0);	// サブネットマスク
 
 #elif COMMUNICATION_MODE == STA	
-	const char ssid[] = "asra-storage-G";	// SSID
-	const char pass[] = "w6a7frr78eug3";	// password
+	const char ssid[] = "TP-Link_92AC";	// SSID
+	const char pass[] = "86624282";	// password 
 	const int localPort = 8888;			// ポート番号
 
-	const IPAddress ip(192, 168, 100, 40);		// IPアドレス
-	const IPAddress gateway(192, 168,100, 0);	// (ゲートウェイ)
+	const IPAddress ip(192, 168, 4, 40);		// IPアドレス(ゲートウェイも兼ねる)
+	const IPAddress gateway(192, 168, 4, 0);	// (ゲートウェイ)
 	const IPAddress subnet(255, 255, 255, 0);	// サブネットマスク
 
 #endif
@@ -154,24 +154,30 @@ void setup() {
   //引数はマイコンで変化　Atom liteの場合はUART,I2C,LEDの初期化の有無
   M5.begin(true, false, true);
   
-  //Atom Motion初期化
-  Atom.Init();      
-
   //M5.beginのあとは他の処理の前に少し待機
   delay(100);	
   
-  //電源確認にLED点灯
-  M5.dis.drawpix(0, 0xffffff);	
+  //Atom Motion初期化
+  Atom.Init();      
+  delay(50);
+  
+  //起動したら赤色LEDに
+  M5.dis.drawpix(0, 0xff0000);
+  delay(50);
 
-  setup_wifiudp();
-
-  //サーボid1を有効化
-  atvsdcon.servo_connected[1]=true;	
-  atvsdcon.servo_connected[2]=true;	
-  atvsdcon.servo_connected[3]=true;	
-  atvsdcon.servo_connected[4]=true;	
+  setup_wifiudp();  
+  delay(50);
+  
+  //サーボidを有効化
+  atvsdcon.servo_connected[1] = true;
+  atvsdcon.servo_connected[2] = true;
+  atvsdcon.servo_connected[3] = true;
+  atvsdcon.servo_connected[4] = true;
   
   pinMode(DEBUG_OUTPUT_PIN, OUTPUT);
+  
+  // setup最後に緑色LEDに
+  M5.dis.drawpix(0, 0x00ff00);
 
 }
 
