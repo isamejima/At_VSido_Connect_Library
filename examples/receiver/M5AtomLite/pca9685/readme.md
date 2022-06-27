@@ -6,12 +6,12 @@ PWM駆動キットは PCA9685 を用いてPWMを生成している.  PCA9685 の
 # 構成
 
 Atom Liteの以下のピンをPWM駆動キットに配線した構成で動作確認を行った.  
-
-Atom Lite		PWM駆動キット
- G21 (SCL)	<-> SCL
- G25 (SDA)	<-> SDA
- GND  		<-> GND
- 5V  		<-> VCC　　
+  
+Atom Lite		PWM駆動キット  
+ G21 (SCL)	<-> SCL  
+ G25 (SDA)	<-> SDA  
+ GND  		<-> GND  
+ 5V  		<-> VCC  
 
 また、PWM駆動キットは別途用意した5V電源を電源端子に接続した.
 また、ジャンパは以下のように設定した.  
