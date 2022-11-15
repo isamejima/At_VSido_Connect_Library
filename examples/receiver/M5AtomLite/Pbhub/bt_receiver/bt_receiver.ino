@@ -84,36 +84,19 @@ void setup_bt() {
   if (debug_flag)DEBUG_SERIAL.println("Waiting for Pairing ...");
 }
 
-void setup_PaPbHub() {
+void setup_PbHub() {
 
   Wire1.begin(26, 32);
-
-  tca9548a.address(PaHub_I2C_ADDRESS);
-  tca9548a.setWire(&Wire1);
-
   pbhub.setWire(&Wire1);
-
-if (debug_flag)DEBUG_SERIAL.println("setup PaPbhub...");
+  if (debug_flag)DEBUG_SERIAL.println("setup Pbhub...");
 
   uint8_t returnCode = 0;
 
   //接続済みのポートを調べる
-  for (uint8_t a_ch = 0; a_ch < 6; a_ch++) {
-    returnCode = tca9548a.selectChannel(a_ch);
-    if (returnCode == 0) {
-      Wire1.beginTransmission(PbHub_I2C_ADDRESS);
-      returnCode = Wire1.endTransmission();
-      if (returnCode == 0) {
-        if(debug_flag)DEBUG_SERIAL.printf("CH%d PbHub detected\n", a_ch);
-        is_hub_connected[a_ch] = true;
-
-        for (int8_t b_ch = 0; b_ch < 6; b_ch++)
-        {
-          uint8_t sid = a_ch * 6 + b_ch+1;
-          atvsdcon.servo_connected[sid] = true;
-        }
-      }
-    }
+  for (int8_t b_ch = 0; b_ch < 6; b_ch++)
+  {
+    uint8_t sid = b_ch + 1;
+    atvsdcon.servo_connected[sid] = true;
   }
 }
 
@@ -124,14 +107,14 @@ void setup() {
   delay(100);
   if (debug_flag)DEBUG_SERIAL.begin(115200);
 
-  setup_PaPbHub();
+  setup_PbHub();
 
   setup_bt();
 
   M5.dis.drawpix(0, 0x0000FF);
 
 
-if(debug_flag)DEBUG_SERIAL.println("setup finished");
+  if (debug_flag)DEBUG_SERIAL.println("setup finished");
   last_update_ms = millis();
 
 }
@@ -139,29 +122,19 @@ if(debug_flag)DEBUG_SERIAL.println("setup finished");
 void loop() {
   uint8_t returnCode = 0;
 
-  for (uint8_t a_ch = 0; a_ch < 6; a_ch++) {
-    if (is_hub_connected[a_ch] == false) {
-      continue;
-    }
+  for (uint8_t b_ch = 0; b_ch < 6; b_ch++) {
+    uint8_t sid = b_ch + 1;
+    //受信角度を読み込み
+    int int_position = atvsdcon.servo_angles[sid];
 
-    returnCode = tca9548a.selectChannel(a_ch);
-    if (returnCode == 0) {
-
-      for (uint8_t b_ch = 0; b_ch < 6; b_ch++) {
-        uint8_t sid = a_ch * 6 + b_ch + 1;
-        //受信角度を読み込み
-        int int_position = atvsdcon.servo_angles[sid];
-
-        //受信角度をサーボに送信
-        if (atvsdcon.servo_connected[sid]) {
-          uint16_t pulse = map(int_position, -1800, 1800, 500, 2500);
-          pbhub.hub_wire_setServoPulse_B(PBHUB_CH_REG[b_ch], pulse);
-          if(debug_flag)DEBUG_SERIAL.printf("sid=%d angle=%d pulse=%d\r\n",sid,int_position,pulse);
-          
-        }
-      }
+    //受信角度をサーボに送信
+    if (atvsdcon.servo_connected[sid]) {
+      uint16_t pulse = map(int_position, -1800, 1800, 500, 2500);
+      pbhub.hub_wire_setServoPulse_B(PBHUB_CH_REG[b_ch], pulse);
+      if (debug_flag)DEBUG_SERIAL.printf("sid=%d angle=%d pulse=%d\r\n", sid, int_position, pulse);
     }
   }
+
   delay(40);
   checkALL();
 }

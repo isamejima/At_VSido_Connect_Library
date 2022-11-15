@@ -21,7 +21,7 @@
 
 
 class AT_PbHub {
-   public:
+  public:
     AT_PbHub();
     AT_PbHub(uint8_t iic_addr);
 
@@ -40,16 +40,22 @@ class AT_PbHub {
     void hub_a_wire_value_B(uint8_t reg, uint16_t duty);
 
     void hub_wire_length(uint8_t reg, uint16_t length);
-    void hub_wire_index_color(uint8_t reg, uint16_t num, uint8_t r, int8_t g,uint8_t b);
-    void hub_wire_fill_color(uint8_t reg, uint16_t first, uint16_t count,uint8_t r, int8_t g, uint8_t b);
+    void hub_wire_index_color(uint8_t reg, uint16_t num, uint8_t r, int8_t g, uint8_t b);
+    void hub_wire_fill_color(uint8_t reg, uint16_t first, uint16_t count, uint8_t r, int8_t g, uint8_t b);
     void hub_wire_setBrightness(uint8_t reg, uint8_t brightness);
 
-   public:
-   private:
-   TwoWire* _pWire;
+    void hub_wire_setServoAngle_A(uint8_t reg, uint8_t angle);
+    void hub_wire_setServoAngle_B(uint8_t reg, uint8_t angle);
+
+    void hub_wire_setServoPulse_A(uint8_t reg, uint16_t pulse);
+    void hub_wire_setServoPulse_B(uint8_t reg, uint16_t pulse);
+
+  public:
+  private:
+    TwoWire* _pWire;
     uint8_t _iic_addr = IIC_ADDR1;
 
-   private:
+  private:
 };
 
 #endif
