@@ -141,8 +141,16 @@ void setup() {
   atvsdcon.servo_connected[3] = true;
   atvsdcon.servo_connected[4] = true;
   
+<<<<<<< Updated upstream:examples/receiver/M5AtomLite/AtomMotion/ethudp_receiver/ethudp_receiver.ino
   // setup最後に緑色LEDに
   M5.dis.drawpix(0, 0x00ff00);
+=======
+  //サーボid1を有効化
+  atvsdcon.servo_connected[1]=true;	 
+  atvsdcon.servo_connected[2]=true;
+  atvsdcon.servo_connected[3]=true;	
+  atvsdcon.servo_connected[4]=true;	
+>>>>>>> Stashed changes:examples/each_Communication/ether_Example/ether_Example.ino
   
 }
 

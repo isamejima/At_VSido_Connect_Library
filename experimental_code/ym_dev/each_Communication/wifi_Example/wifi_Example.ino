@@ -176,7 +176,11 @@ void loop() {
 			int tar_position=(int_position+1800)*20/36+500;	
 
 			//サーボへ書き込み
+<<<<<<< Updated upstream:experimental_code/ym_dev/each_Communication/wifi_Example/wifi_Example.ino
 			Atom.SetServoPulse(sid, tar_position);	
+=======
+			Atom.SetServoPulse(sid, tar_position);
+>>>>>>> Stashed changes:examples/each_Communication/wifi_Example/wifi_Example.ino
 
 		}
 		//V-Sidoプロトコルの受信割込み
