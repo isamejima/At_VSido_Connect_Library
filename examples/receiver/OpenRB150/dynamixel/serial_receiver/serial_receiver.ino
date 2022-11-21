@@ -1,16 +1,7 @@
 #include <At_Vsido_Connect_Library.h>
 #include <Dynamixel2Arduino.h>
-#include <Ethernet.h>
-#include <EthernetUdp.h>
 
-
-//Ethernet関連
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
-IPAddress ip(192, 168, 1, 177);
-unsigned int localPort = 8888;  // local port to listen on
-EthernetUDP Udp;
+bool debug_flag=false;
 
 // DXL通信関連
 #if defined(ARDUINO_OpenRB)  // When using OpenRB-150
@@ -59,6 +50,7 @@ void setup() {
   //OpenRB User LED(LED2)の設定
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);//点灯
+  if(debug_flag)DEBUG_SERIAL.println("dynamixel library initialized");
 
   for (int sid = 0; sid < atvsdcon.MAXSERVO; sid++) {
     atvsdcon.servo_connected[sid] = dxl.ping(sid);
@@ -66,11 +58,12 @@ void setup() {
     dxl.setOperatingMode(sid, OP_POSITION);
     dxl.torqueOn(sid);
   }
+  if(debug_flag)DEBUG_SERIAL.println("setup finished.");
 }
 
-void checkALL() {  //受信割込み用の関数
-
-  //ショートパケットを全サーボに投げているので、遅い。また、現座角度しか読んでいない  
+void updateServoStatus()
+{
+  //ショートパケットを全サーボに投げている。また、現座角度しか読んでいない 。
   //TODO:最適化(ロングパケットにする。エラーフラグなども読む。)
   for (int sid = 1; sid < atvsdcon.MAXSERVO; sid++) {
     if (atvsdcon.servo_connected[sid]) {
@@ -79,12 +72,15 @@ void checkALL() {  //受信割込み用の関数
       atvsdcon.servo_present_angles[sid]=vsido_angle;
     }
   }
+}
+
+void checkALL() {  //受信割込み用の関数
+
+  //dynamixelのステータス読出し
+  updateServoStatus();
 
   //シリアル割込み
-  while (VSD_SERIAL.available())
-    VSD_isrRx();
-  // UDP割り込み処理を入れるならここ
-  /****/
+  VSD_isrRx();
 }
 
 void loop() {
