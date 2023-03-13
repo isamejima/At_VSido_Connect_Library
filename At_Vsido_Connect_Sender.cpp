@@ -199,14 +199,14 @@ void At_Vsido_Connect_Sender::setStatusByte(int id, unsigned char status_byte) {
 
 bool At_Vsido_Connect_Sender::unpackObjectPacket() {
 	//データ構造がおかしければfalse
-	// cycle id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc
-	if ((pc_ln - 4 - 1) % 4 != 0) {
+	//id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc
+	if ((pc_ln - 4) % 4 != 0) {
 		At_Vsido_Connect_Library::resetRead1byte();
 		return false;
 	}
 
-	int servo_num   = (pc_ln - 4 - 1) / 4;
-	int read_offset = 4;  // header op len　cycの4つを読み飛ばす
+	int servo_num   = (pc_ln - 4) / 4;
+	int read_offset = 3;  // header op lenの3つを読み飛ばす
 
 	//各id毎の処理
 	for (int i = 0; i < servo_num; i++) {
@@ -232,14 +232,14 @@ bool At_Vsido_Connect_Sender::unpackObjectPacket() {
 
 bool At_Vsido_Connect_Sender::unpackTorquePacket() {
 	//データ構造がおかしければfalse
-	// cycle id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc
-	if ((pc_ln - 4 - 1) % 4 != 0) {
+	//id1 sb1 angle1_l angle1_h id2 sb2 angle2_l angle2_h…etc	
+	if ((pc_ln - 4) % 4 != 0) {
 		resetRead1byte();
 		return false;
 	}
 
-	int servo_num   = (pc_ln - 4 - 1) / 4;
-	int read_offset = 4;  // header op len　cycの4つを読み飛ばす
+	int servo_num   = (pc_ln - 4 ) / 4;
+	int read_offset = 3;  // header op len の3つを読み飛ばす
 
 	//各id毎の処理
 	for (int i = 0; i < servo_num; i++) {
