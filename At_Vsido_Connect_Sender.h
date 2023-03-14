@@ -20,6 +20,9 @@ class At_Vsido_Connect_Sender : public At_Vsido_Connect_Library {
   bool genObjectPacket(int cyc, unsigned char *packet, int *packet_ln);
   bool genTorquePacket(int cyc, unsigned char *packet, int *packet_ln);
 
+  bool genSpecificIdObjectPacket(int cyc, int id,int16_t vsido_value,unsigned char *packet, int *packet_ln);
+  bool genSpecificIdTorquePacket(int cyc, int id,int16_t vsido_value,unsigned char *packet, int *packet_ln);
+
  protected:
   bool servo_sent[VSIDO_MAXSERVO];  //送信したかどうか
 

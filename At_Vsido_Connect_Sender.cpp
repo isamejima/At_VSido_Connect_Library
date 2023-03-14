@@ -70,6 +70,58 @@ bool At_Vsido_Connect_Sender::genObjectPacket(
 	return true;
 }
 
+bool At_Vsido_Connect_Sender::genSpecificIdObjectPacket(
+    int cyc, int id,int16_t vsido_value,unsigned char *packet, int *packet_ln) {
+	unsigned char data[4] = {};
+	unsigned char lower              = 0;
+	unsigned char upper              = 0;
+	int           cnt                = 0;
+
+	if(isValidServoID(id)==false)return false;
+
+	data[cnt++] = (unsigned char)cyc;
+			data[cnt++] = id;
+			divAngle(vsido_value, &upper, &lower);
+			data[cnt++] = upper;
+			data[cnt++] = lower;	
+
+	if (cnt == 1) {
+		return false;
+	}
+
+	genVSidoPacket('o', data, cnt, packet, packet_ln);
+
+	if (packet_ln == 0) return false;
+
+	return true;
+}
+
+bool At_Vsido_Connect_Sender::genSpecificIdTorquePacket(
+    int cyc, int id,int16_t vsido_value,unsigned char *packet, int *packet_ln) {
+	unsigned char data[3] = {};
+	unsigned char lower              = 0;
+	unsigned char upper              = 0;
+	int           cnt                = 0;
+
+	if(isValidServoID(id)==false)return false;
+
+	data[cnt++] = (unsigned char)cyc;
+			data[cnt++] = id;
+			divAngle(vsido_value, &upper, &lower);
+			data[cnt++] = upper;
+			data[cnt++] = lower;	
+
+	if (cnt == 1) {
+		return false;
+	}
+
+	genVSidoPacket('o', data, cnt, packet, packet_ln);
+
+	if (packet_ln == 0) return false;
+
+	return true;
+}
+
 bool At_Vsido_Connect_Sender::genTorquePacket(
     int cyc, unsigned char *packet, int *packet_ln) {
 	unsigned char data[MAXSERVO * 3] = {};
@@ -310,4 +362,5 @@ bool At_Vsido_Connect_Sender::genDataPacket(
 	}
 
 	genVSidoPacket('d', data, cnt, packet, packet_ln);
+	return true;
 }
