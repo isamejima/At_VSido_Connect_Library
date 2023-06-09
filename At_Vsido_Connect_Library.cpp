@@ -33,6 +33,8 @@ At_Vsido_Connect_Library::At_Vsido_Connect_Library() {
 		servo_status_servoon[id] = false;
 		servo_status_error[id]   = false;
 
+		servo_flag_update_angle[id]=false;
+
 		servo_connected[id] = false;
 	}
 }
@@ -228,6 +230,7 @@ bool At_Vsido_Connect_Library::unpackObjectPacket() {
 		if (!isEXCEPTION_VALUE(servo_angle)) {
 			servo_cycle[servo_id]  = cyc;
 			servo_angles[servo_id] = servo_angle;
+			servo_flag_update_angle[servo_id]=true;
 		}
 
 		//返信データ
@@ -274,6 +277,7 @@ bool At_Vsido_Connect_Library::unpackTorquePacket() {
 		if (!isEXCEPTION_VALUE(servo_torque)) {
 			servo_cycle[servo_id]   = cyc;
 			servo_torques[servo_id] = servo_torque;
+			servo_flag_update_angle[servo_id] = true;
 		}
 		//返信データ
 		unsigned char lower, upper;

@@ -40,6 +40,9 @@ class At_Vsido_Connect_Library {
   int servo_torques[VSIDO_MAXSERVO];  //受信した全関節のトルク指示値
   int servo_cycle[VSIDO_MAXSERVO];  //受信した全関節の目標到達時間(cyc)
 
+  // vsido関連 bool
+  bool servo_flag_update_angle[VSIDO_MAXSERVO];
+
   // vsido関連 現在値格納用
   int servo_present_angles[VSIDO_MAXSERVO];  //全関節角度現在値
   int servo_present_torques[VSIDO_MAXSERVO];  //全関節トルク現在値
