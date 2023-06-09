@@ -33,6 +33,8 @@ At_Vsido_Connect_Library::At_Vsido_Connect_Library() {
 		servo_status_servoon[id] = false;
 		servo_status_error[id]   = false;
 
+		servo_flag_update_angle[id]=false;
+
 		servo_connected[id] = false;
 	}
 }
